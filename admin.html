@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>국악 DB 관리자</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--border:#e5e4df;--border2:#d3d1c7;
+  --text:#1a1a18;--muted:#888780;--hint:#b4b2a9;
+  --blue:#185FA5;--blue-bg:#e6f1fb;--blue-text:#0C447C;
+  --teal:#1D9E75;--teal-bg:#e1f5ee;--teal-text:#085041;
+  --red:#A32D2D;--red-bg:#fcebeb;--red-text:#791F1F;
+  --amber:#BA7517;--amber-bg:#faeeda;--amber-text:#633806;
+  --gray:#f1efe8;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+
+/* 헤더 */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.header h1{font-size:16px;font-weight:600}
+.header-right{display:flex;gap:8px;align-items:center}
+.btn{padding:7px 14px;border-radius:7px;font-size:13px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--text);transition:all .12s}
+.btn:hover{background:var(--gray)}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:#0C447C}
+.btn-danger{background:var(--red-bg);color:var(--red-text);border-color:var(--red-bg)}
+.btn-danger:hover{background:#f7c1c1}
+.btn-success{background:var(--teal-bg);color:var(--teal-text);border-color:var(--teal-bg)}
+.btn-success:hover{background:#9FE1CB}
+
+/* 로딩 */
+#loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px;color:var(--muted)}
+.spinner{width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 메인 */
+#app{display:none;padding:20px 28px 40px}
+
+/* 상태바 */
+.statusbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.stat-chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{padding:4px 10px;border-radius:6px;font-size:12px;font-weight:500}
+.chip-blue{background:var(--blue-bg);color:var(--blue-text)}
+.chip-amber{background:var(--amber-bg);color:var(--amber-text)}
+.chip-teal{background:var(--teal-bg);color:var(--teal-text)}
+.chip-red{background:var(--red-bg);color:var(--red-text)}
+
+/* 검색·필터 */
+.toolbar{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+.toolbar input,.toolbar select{padding:7px 11px;font-size:13px;border:1px solid var(--border2);border-radius:7px;background:var(--surface);color:var(--text);outline:none}
+.toolbar input{flex:2;min-width:180px}
+.toolbar input:focus,.toolbar select:focus{border-color:var(--blue)}
+.toolbar select{flex:1;min-width:110px}
+
+/* 테이블 */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;margin-bottom:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:var(--gray);padding:8px 10px;text-align:left;font-weight:500;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;user-select:none;cursor:pointer}
+th:hover{background:#e5e4df}
+td{padding:7px 10px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr.modified td{background:#fffbea}
+tr.added td{background:#f0fdf8}
+tr.deleted td{background:#fff0f0;text-decoration:line-through;opacity:.6}
+tr:hover:not(.deleted) td{background:var(--gray)}
+.badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:500}
+.b-vocal{background:var(--teal-bg);color:var(--teal-text)}
+.b-instr{background:var(--blue-bg);color:var(--blue-text)}
+.b-drama{background:var(--amber-bg);color:var(--amber-text)}
+.b-etc{background:var(--gray);color:var(--muted)}
+.action-btns{display:flex;gap:4px;white-space:nowrap}
+.icon-btn{padding:3px 8px;border-radius:5px;font-size:11px;cursor:pointer;border:1px solid var(--border2);background:var(--surface);color:var(--muted);transition:all .1s}
+.icon-btn:hover{background:var(--gray)}
+.icon-btn.del:hover{background:var(--red-bg);color:var(--red-text);border-color:var(--red-bg)}
+.icon-btn.restore:hover{background:var(--teal-bg);color:var(--teal-text)}
+
+/* 페이지네이션 */
+.pagination{display:flex;gap:6px;align-items:center;justify-content:center}
+.page-btn{padding:4px 12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--text);cursor:pointer;font-size:12px}
+.page-btn:disabled{opacity:.3;cursor:default}
+.page-btn:not(:disabled):hover{background:var(--gray)}
+.page-info{color:var(--muted);font-size:12px;min-width:70px;text-align:center}
+
+/* 모달 */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:500;align-items:center;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:12px;padding:24px;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:16px;font-weight:600;margin-bottom:16px}
+.field-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.field{display:flex;flex-direction:column;gap:4px}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select,.field textarea{padding:8px 10px;font-size:13px;border:1px solid var(--border2);border-radius:7px;background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue)}
+.field textarea{resize:vertical;min-height:60px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;border-top:1px solid var(--border);padding-top:16px}
+
+/* 알림 토스트 */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:var(--surface);padding:10px 16px;border-radius:8px;font-size:13px;z-index:999;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+
+/* 다운로드 안내 */
+.download-note{background:var(--amber-bg);color:var(--amber-text);border-radius:8px;padding:10px 14px;font-size:12px;margin-bottom:14px;display:none}
+.download-note.visible{display:block}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>국악 DB 관리자</h1>
+  <div class="header-right">
+    <span id="unsavedBadge" style="display:none" class="chip chip-amber">미저장 변경사항 있음</span>
+    <button class="btn" onclick="document.getElementById('fileInput').click()">JSON 불러오기</button>
+    <input type="file" id="fileInput" accept=".json" style="display:none" onchange="loadFile(this)">
+    <button class="btn btn-primary" onclick="openAddModal()">+ 작품 추가</button>
+    <button class="btn btn-success" onclick="downloadJSON()">JSON 다운로드</button>
+  </div>
+</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <p>kugak.json을 불러오는 중...</p>
+  <p style="font-size:12px;color:var(--hint);margin-top:4px">파일이 없으면 오른쪽 위 "JSON 불러오기"를 사용하세요</p>
+</div>
+
+<div id="app">
+  <div class="download-note" id="downloadNote">
+    변경사항을 적용하려면 <strong>JSON 다운로드</strong> 후 GitHub 저장소의 <code>kugak.json</code>을 교체하세요.
+  </div>
+
+  <div class="statusbar">
+    <div class="stat-chips">
+      <span class="chip chip-blue" id="statTotal">전체 0곡</span>
+      <span class="chip chip-teal" id="statShown">표시 0곡</span>
+      <span class="chip chip-amber" id="statModified" style="display:none">수정 0건</span>
+      <span class="chip chip-red" id="statDeleted" style="display:none">삭제 0건</span>
+    </div>
+    <div style="display:flex;gap:6px">
+      <button class="btn" onclick="undoAll()" id="undoBtn" style="display:none">전체 되돌리기</button>
+    </div>
+  </div>
+
+  <div class="toolbar">
+    <input type="text" id="q" placeholder="제목, 작곡가, 공연명 검색..." oninput="doFilter()">
+    <select id="fGenre" onchange="doFilter()">
+      <option value="">전체 장르</option>
+      <option value="기악">기악</option>
+      <option value="성악">성악</option>
+      <option value="극음악">극음악</option>
+    </select>
+    <select id="fForm" onchange="doFilter()">
+      <option value="">전체 형식</option>
+    </select>
+    <select id="fModified" onchange="doFilter()">
+      <option value="">전체 상태</option>
+      <option value="modified">수정된 항목</option>
+      <option value="added">추가된 항목</option>
+      <option value="deleted">삭제된 항목</option>
+    </select>
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('t')">제목 <span id="sort-t"></span></th>
+          <th onclick="sortBy('f1')">장르 <span id="sort-f1"></span></th>
+          <th onclick="sortBy('f2')">형식 <span id="sort-f2"></span></th>
+          <th onclick="sortBy('c')">작곡가 <span id="sort-c"></span></th>
+          <th onclick="sortBy('d')">공연일 <span id="sort-d"></span></th>
+          <th>공연명</th>
+          <th style="width:110px">작업</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+
+  <div class="pagination">
+    <button class="page-btn" id="prevBtn" onclick="changePage(-1)">← 이전</button>
+    <span class="page-info" id="pageInfo"></span>
+    <button class="page-btn" id="nextBtn" onclick="changePage(1)">다음 →</button>
+  </div>
+</div>
+
+<!-- 편집 모달 -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2 id="modalTitle">작품 편집</h2>
+    <div class="field-grid">
+      <div class="field full"><label>제목</label><input id="f-t" placeholder="작품 제목"></div>
+      <div class="field"><label>장르 (form1)</label>
+        <select id="f-f1">
+          <option value="">선택</option>
+          <option value="기악">기악</option>
+          <option value="성악">성악</option>
+          <option value="극음악">극음악</option>
+        </select>
+      </div>
+      <div class="field"><label>형식 (form2)</label><input id="f-f2" placeholder="합주, 독주, 관현악..."></div>
+      <div class="field"><label>악기·분류 (form3)</label><input id="f-f3" placeholder="가야금, 피리..."></div>
+      <div class="field"><label>작곡가</label><input id="f-c" placeholder="작곡가명"></div>
+      <div class="field"><label>공연일</label><input id="f-d" placeholder="1995.10.15"></div>
+      <div class="field full"><label>공연명</label><input id="f-n" placeholder="제00회 정기연주회..."></div>
+      <div class="field full"><label>공연 장소</label><input id="f-p" placeholder="국립국악원 예악당..."></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveModal()">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const FIELDS = ['t','f1','f2','f3','c','d','n','p'];
+let WORKS = [], STATS = {};
+let displayWorks = [];
+let currentPage = 0;
+const PAGE = 50;
+let editingIdx = null;
+let sortKey = '', sortDir = 1;
+let modified = new Set(), deleted = new Set(), added = new Set();
+let originals = {};
+
+// ── 로드 ──
+async function autoLoad() {
+  try {
+    const res = await fetch('kugak.json');
+    if(!res.ok) throw new Error();
+    const data = await res.json();
+    applyData(data);
+  } catch {
+    document.getElementById('loading').innerHTML =
+      '<p style="color:var(--muted)">kugak.json 자동 로드 실패<br><span style="font-size:12px">오른쪽 위 <strong>JSON 불러오기</strong>로 파일을 선택하세요</span></p>';
+  }
+}
+
+function loadFile(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      applyData(data);
+      toast('파일 불러오기 완료: ' + file.name);
+    } catch { toast('JSON 파싱 실패. 올바른 kugak.json 파일인지 확인하세요.'); }
+  };
+  reader.readAsText(file);
+}
+
+function applyData(data) {
+  WORKS = data.works || [];
+  STATS = data.stats || {};
+  modified.clear(); deleted.clear(); added.clear(); originals = {};
+  const formSet = new Set(WORKS.map(w=>w.f2).filter(Boolean));
+  const sel = document.getElementById('fForm');
+  sel.innerHTML = '<option value="">전체 형식</option>';
+  [...formSet].sort().forEach(f => { const o=document.createElement('option'); o.value=f; o.textContent=f; sel.appendChild(o); });
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  doFilter();
+  updateStats();
+}
+
+// ── 필터·정렬 ──
+function doFilter() {
+  const q  = (document.getElementById('q').value||'').toLowerCase();
+  const g  = document.getElementById('fGenre').value;
+  const f  = document.getElementById('fForm').value;
+  const st = document.getElementById('fModified').value;
+
+  displayWorks = WORKS.map((w,i)=>({...w, _idx:i})).filter((w,_,arr) => {
+    const idx = w._idx;
+    if(st === 'modified' && !modified.has(idx)) return false;
+    if(st === 'added'    && !added.has(idx))    return false;
+    if(st === 'deleted'  && !deleted.has(idx))  return false;
+    if(g && w.f1 !== g)  return false;
+    if(f && !w.f2.includes(f)) return false;
+    if(q) { const hay=(w.t+w.c+w.n+w.f3||'').toLowerCase(); if(!hay.includes(q)) return false; }
+    return true;
+  });
+
+  if(sortKey) {
+    displayWorks.sort((a,b) => (a[sortKey]||'').localeCompare(b[sortKey]||'','ko') * sortDir);
+  }
+
+  currentPage = 0;
+  renderTable();
+  updateStats();
+}
+
+function sortBy(key) {
+  if(sortKey === key) sortDir *= -1; else { sortKey=key; sortDir=1; }
+  document.querySelectorAll('[id^="sort-"]').forEach(el=>el.textContent='');
+  document.getElementById('sort-'+key).textContent = sortDir===1 ? ' ▲' : ' ▼';
+  doFilter();
+}
+
+// ── 테이블 렌더 ──
+function renderTable() {
+  const total = displayWorks.length;
+  const start = currentPage * PAGE;
+  const page  = displayWorks.slice(start, start+PAGE);
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+
+  if(!page.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--muted)">항목이 없습니다</td></tr>';
+  } else {
+    page.forEach(w => {
+      const idx = w._idx;
+      const isDel = deleted.has(idx);
+      const isMod = modified.has(idx);
+      const isAdd = added.has(idx);
+      const cls   = isDel?'deleted':isAdd?'added':isMod?'modified':'';
+      const bc    = w.f1==='성악'?'b-vocal':w.f1==='극음악'?'b-drama':w.f1==='기악'?'b-instr':'b-etc';
+      tbody.innerHTML += `<tr class="${cls}">
+        <td style="font-weight:500;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(w.t)}">${esc(w.t)||'—'}</td>
+        <td><span class="badge ${bc}">${esc(w.f1)||'—'}</span></td>
+        <td style="white-space:nowrap;color:var(--muted)">${esc(w.f2)||'—'}</td>
+        <td style="white-space:nowrap">${esc(w.c)||'—'}</td>
+        <td style="white-space:nowrap;color:var(--muted)">${esc(w.d)||'—'}</td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:12px" title="${esc(w.n)}">${esc(w.n)||'—'}</td>
+        <td><div class="action-btns">
+          ${isDel
+            ? `<button class="icon-btn restore" onclick="restoreWork(${idx})">복원</button>`
+            : `<button class="icon-btn" onclick="openEditModal(${idx})">수정</button>
+               <button class="icon-btn del" onclick="deleteWork(${idx})">삭제</button>`}
+        </div></td>
+      </tr>`;
+    });
+  }
+
+  const tp = Math.ceil(total/PAGE)||1;
+  document.getElementById('pageInfo').textContent = `${currentPage+1} / ${tp}`;
+  document.getElementById('prevBtn').disabled = currentPage===0;
+  document.getElementById('nextBtn').disabled = currentPage>=tp-1;
+  document.getElementById('statShown').textContent = `표시 ${total.toLocaleString()}곡`;
+}
+
+function changePage(d) {
+  const tp = Math.ceil(displayWorks.length/PAGE)||1;
+  currentPage = Math.max(0, Math.min(tp-1, currentPage+d));
+  renderTable();
+}
+
+function esc(s) { return (s||'').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ── 편집 모달 ──
+function openAddModal() {
+  editingIdx = null;
+  document.getElementById('modalTitle').textContent = '작품 추가';
+  FIELDS.forEach(f => {
+    const el = document.getElementById('f-'+f);
+    if(el) el.value = '';
+  });
+  document.getElementById('modal').classList.add('open');
+}
+
+function openEditModal(idx) {
+  editingIdx = idx;
+  const w = WORKS[idx];
+  document.getElementById('modalTitle').textContent = '작품 수정';
+  FIELDS.forEach(f => {
+    const el = document.getElementById('f-'+f);
+    if(el) el.value = w[f]||'';
+  });
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  editingIdx = null;
+}
+
+function saveModal() {
+  const vals = {};
+  FIELDS.forEach(f => { const el=document.getElementById('f-'+f); if(el) vals[f]=el.value.trim(); });
+
+  if(!vals.t) { toast('제목은 필수입니다'); return; }
+
+  if(editingIdx === null) {
+    WORKS.push(vals);
+    const newIdx = WORKS.length - 1;
+    added.add(newIdx);
+    toast('작품이 추가되었습니다');
+  } else {
+    if(!originals[editingIdx]) originals[editingIdx] = {...WORKS[editingIdx]};
+    WORKS[editingIdx] = {...WORKS[editingIdx], ...vals};
+    if(!added.has(editingIdx)) modified.add(editingIdx);
+    toast('수정되었습니다');
+  }
+
+  closeModal();
+  markUnsaved();
+  doFilter();
+}
+
+// ── 삭제·복원 ──
+function deleteWork(idx) {
+  if(!confirm('이 작품을 삭제 표시하시겠습니까?\n실제 삭제는 JSON 다운로드 시 반영됩니다.')) return;
+  deleted.add(idx);
+  markUnsaved();
+  doFilter();
+  toast('삭제 표시됨 (JSON 다운로드 시 반영)');
+}
+
+function restoreWork(idx) {
+  deleted.delete(idx);
+  markUnsaved();
+  doFilter();
+  toast('복원되었습니다');
+}
+
+function undoAll() {
+  if(!confirm('모든 변경사항을 되돌리겠습니까?')) return;
+  Object.entries(originals).forEach(([i,orig]) => { WORKS[parseInt(i)] = orig; });
+  const addedList = [...added].sort((a,b)=>b-a);
+  addedList.forEach(i => WORKS.splice(i,1));
+  modified.clear(); deleted.clear(); added.clear(); originals={};
+  document.getElementById('unsavedBadge').style.display='none';
+  document.getElementById('undoBtn').style.display='none';
+  document.getElementById('downloadNote').classList.remove('visible');
+  doFilter();
+  toast('모든 변경사항을 되돌렸습니다');
+}
+
+// ── 통계 ──
+function updateStats() {
+  document.getElementById('statTotal').textContent = `전체 ${WORKS.length.toLocaleString()}곡`;
+  const mc = modified.size, dc = deleted.size, ac = added.size;
+  const modEl = document.getElementById('statModified');
+  const delEl = document.getElementById('statDeleted');
+  modEl.style.display = (mc||ac) ? 'inline-block' : 'none';
+  modEl.textContent = `수정+추가 ${mc+ac}건`;
+  delEl.style.display = dc ? 'inline-block' : 'none';
+  delEl.textContent = `삭제 ${dc}건`;
+}
+
+function markUnsaved() {
+  document.getElementById('unsavedBadge').style.display='inline-block';
+  document.getElementById('undoBtn').style.display='inline-block';
+  document.getElementById('downloadNote').classList.add('visible');
+  updateStats();
+}
+
+// ── JSON 다운로드 ──
+function downloadJSON() {
+  const finalWorks = WORKS.filter((_,i) => !deleted.has(i));
+
+  // stats 재계산 (간단 버전)
+  const newStats = STATS ? {...STATS} : {};
+  newStats.total = finalWorks.length;
+
+  const out = { works: finalWorks, stats: newStats };
+  const str = JSON.stringify(out, null, null);
+  const blob = new Blob([str], {type:'application/json'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = 'kugak.json'; a.click();
+  URL.revokeObjectURL(url);
+  toast(`다운로드 완료 (${finalWorks.length.toLocaleString()}개 작품)`);
+
+  // 저장 상태 초기화
+  modified.clear(); deleted.clear(); added.clear(); originals={};
+  document.getElementById('unsavedBadge').style.display='none';
+  document.getElementById('undoBtn').style.display='none';
+  document.getElementById('downloadNote').classList.remove('visible');
+  updateStats();
+}
+
+// ── 토스트 ──
+let toastTimer;
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+// 모달 외부 클릭 닫기
+document.getElementById('modal').addEventListener('click', e => {
+  if(e.target === document.getElementById('modal')) closeModal();
+});
+
+autoLoad();
+</script>
+</body>
+</html>

@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>한국 창작국악 작품 데이터베이스</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--border:#e5e4df;--border2:#d3d1c7;
+  --text:#1a1a18;--muted:#888780;--hint:#b4b2a9;
+  --blue:#185FA5;--blue-light:#e6f1fb;--blue-text:#0C447C;
+  --teal:#1D9E75;--teal-light:#e1f5ee;--teal-text:#085041;
+  --amber:#BA7517;--amber-light:#faeeda;--amber-text:#633806;
+  --gray-light:#f1efe8;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1a1a18;--surface:#2c2c2a;--border:#444441;--border2:#5f5e5a;
+    --text:#e8e7e2;--muted:#888780;--hint:#5f5e5a;
+    --blue:#378ADD;--blue-light:#0C447C;--blue-text:#B5D4F4;
+    --teal:#1D9E75;--teal-light:#085041;--teal-text:#9FE1CB;
+    --amber:#EF9F27;--amber-light:#633806;--amber-text:#FAC775;
+    --gray-light:#2c2c2a;
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Noto Sans KR,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh}
+
+/* 헤더 */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:18px 32px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100}
+.header-left h1{font-size:18px;font-weight:600}
+.header-left p{font-size:12px;color:var(--muted);margin-top:2px}
+.header-badge{background:var(--blue-light);color:var(--blue-text);font-size:12px;font-weight:500;padding:4px 10px;border-radius:6px}
+
+/* 로딩 */
+#loading{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:12px;color:var(--muted)}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 메인 레이아웃 */
+#app{display:none}
+.metric-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:20px 32px 0}
+.metric{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 16px}
+.metric-label{font-size:11px;color:var(--muted);margin-bottom:3px}
+.metric-val{font-size:22px;font-weight:600}
+
+/* 탭 */
+.tabs{display:flex;gap:2px;padding:16px 32px 0;border-bottom:1px solid var(--border)}
+.tab{padding:8px 16px;font-size:14px;cursor:pointer;border-radius:8px 8px 0 0;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;transition:all .15s}
+.tab.active{color:var(--text);background:var(--surface);border-bottom-color:var(--blue);font-weight:500}
+
+/* 컨텐츠 */
+.content{padding:20px 32px 40px;background:var(--surface);min-height:500px}
+.panel{display:none}.panel.active{display:block}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.chart-box{border:1px solid var(--border);border-radius:10px;padding:16px}
+.chart-title{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;font-size:11px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:4px}
+.legend i{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+
+/* 검색 */
+.search-section{margin-bottom:14px}
+.search-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.search-row input,.search-row select{padding:8px 12px;font-size:14px;border:1px solid var(--border2);border-radius:8px;background:var(--surface);color:var(--text);outline:none;transition:border-color .15s}
+.search-row input{flex:2;min-width:200px}
+.search-row input:focus,.search-row select:focus{border-color:var(--blue)}
+.search-row select{flex:1;min-width:120px}
+.results-count{font-size:12px;color:var(--muted)}
+
+/* 테이블 */
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:13px;table-layout:auto}
+th{background:var(--gray-light);padding:8px 12px;text-align:left;font-weight:500;font-size:11px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;text-transform:uppercase;letter-spacing:.04em}
+td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--text)}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--gray-light)}
+.badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:11px;font-weight:500}
+.b-vocal{background:var(--teal-light);color:var(--teal-text)}
+.b-instr{background:var(--blue-light);color:var(--blue-text)}
+.b-drama{background:var(--amber-light);color:var(--amber-text)}
+.b-etc{background:var(--gray-light);color:var(--muted)}
+
+/* 페이지네이션 */
+.pagination{display:flex;gap:8px;align-items:center;margin-top:14px;justify-content:center}
+.page-btn{padding:5px 14px;border:1px solid var(--border2);border-radius:7px;background:var(--surface);color:var(--text);cursor:pointer;font-size:13px;transition:background .12s}
+.page-btn:disabled{opacity:.3;cursor:default}
+.page-btn:not(:disabled):hover{background:var(--gray-light)}
+.page-info{color:var(--muted);font-size:12px;min-width:80px;text-align:center}
+
+/* 랭킹 */
+.rank-cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.rank-box-title{font-size:12px;font-weight:500;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em}
+.rank-list{display:flex;flex-direction:column;gap:4px}
+.rank-item{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--gray-light);border-radius:7px}
+.rank-num{font-size:11px;color:var(--hint);min-width:20px;text-align:right;font-weight:500}
+.rank-name{flex:1;font-size:13px}
+.rank-bar-wrap{width:90px;height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.rank-bar{height:100%;border-radius:3px;background:var(--blue)}
+.rank-count{font-size:11px;color:var(--muted);min-width:28px;text-align:right}
+.form-sel-wrap{margin-bottom:8px}
+.form-sel-wrap select{padding:6px 10px;font-size:13px;border:1px solid var(--border2);border-radius:7px;background:var(--surface);color:var(--text)}
+
+/* 히트맵 */
+.hm-wrap{overflow-x:auto}
+.hm-grid-outer{display:grid;grid-template-columns:32px 1fr;gap:0;align-items:start}
+.hm-y-axis{display:flex;flex-direction:column;padding-top:24px}
+.hm-y-lbl{font-size:10px;color:var(--muted);text-align:right;padding-right:5px;display:flex;align-items:center;justify-content:flex-end}
+.hm-right{display:flex;flex-direction:column}
+.hm-x-axis{display:flex;gap:1px;padding-bottom:3px;height:24px;align-items:flex-end}
+.hm-x-lbl{font-size:9px;color:var(--muted);text-align:center;writing-mode:vertical-rl;transform:rotate(180deg);line-height:1}
+.hm-rows{display:flex;flex-direction:column;gap:1px}
+.hm-row{display:flex;gap:1px}
+.hm-cell{border-radius:2px;cursor:pointer;transition:opacity .1s;flex-shrink:0}
+.hm-cell:hover{opacity:.7;outline:1.5px solid var(--border2)}
+
+/* 범례 */
+.legend-strip{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:11px;color:var(--muted)}
+.legend-strip-cells{display:flex;gap:2px}
+.legend-strip-cell{width:13px;height:13px;border-radius:2px}
+
+/* 히트맵 제어 */
+.hm-controls{display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.hm-controls input[type=range]{width:120px}
+.mode-btns{display:flex;gap:4px}
+.mode-btn{padding:4px 10px;font-size:12px;border:1px solid var(--border2);border-radius:6px;background:var(--surface);color:var(--muted);cursor:pointer}
+.mode-btn.on{background:var(--text);color:var(--surface);border-color:var(--text)}
+
+/* 월별바 */
+.bottom-charts{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+.bar-row{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.bar-lbl{font-size:11px;color:var(--muted);min-width:24px;text-align:right}
+.bar-track{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.bar-fill{height:100%;border-radius:4px}
+.bar-val{font-size:11px;color:var(--hint);min-width:36px}
+
+/* 툴팁 */
+.tooltip{position:absolute;background:var(--surface);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:12px;pointer-events:none;z-index:200;display:none;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,.08)}
+.tt-main{font-weight:500;margin-bottom:2px}
+.tt-sub{color:var(--muted);font-size:11px}
+
+/* 반응형 */
+@media(max-width:700px){
+  .metric-grid{grid-template-columns:1fr 1fr}
+  .chart-row,.rank-cols,.bottom-charts{grid-template-columns:1fr}
+  .header,.content,.tabs,.metric-grid{padding-left:16px;padding-right:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>한국 창작국악 작품 데이터베이스</h1>
+    <p>1940–2018년 · 국악 창작 작품 아카이브</p>
+  </div>
+  <span class="header-badge" id="totalBadge">로딩 중...</span>
+</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <span>데이터를 불러오는 중입니다...</span>
+</div>
+
+<div id="app">
+  <div class="metric-grid">
+    <div class="metric"><div class="metric-label">총 작품 수</div><div class="metric-val" id="mTotal">—</div></div>
+    <div class="metric"><div class="metric-label">수록 작곡가</div><div class="metric-val" id="mComposers">—</div></div>
+    <div class="metric"><div class="metric-label">기록 연도</div><div class="metric-val">1940–2018</div></div>
+    <div class="metric"><div class="metric-label">공연 형식</div><div class="metric-val" id="mForms">—</div></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('search',this)">작품 검색</button>
+    <button class="tab" onclick="switchTab('charts',this)">통계 차트</button>
+    <button class="tab" onclick="switchTab('heatmap',this)">공연 히트맵</button>
+    <button class="tab" onclick="switchTab('rank',this)">작곡가 랭킹</button>
+  </div>
+
+  <div class="content">
+
+    <!-- 검색 -->
+    <div id="panel-search" class="panel active">
+      <div class="search-section">
+        <div class="search-row">
+          <input type="text" id="q" placeholder="제목, 작곡가, 공연명으로 검색..." oninput="doSearch()">
+          <select id="fGenre" onchange="doSearch()">
+            <option value="">전체 장르</option>
+            <option value="기악">기악</option>
+            <option value="성악">성악</option>
+            <option value="극음악">극음악</option>
+          </select>
+          <select id="fForm" onchange="doSearch()">
+            <option value="">전체 형식</option>
+          </select>
+        </div>
+        <div class="results-count" id="resultInfo"></div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>제목</th><th>장르</th><th>형식</th><th>악기·분류</th>
+            <th>작곡가</th><th>공연일</th><th>공연명</th><th>공연 장소</th>
+          </tr></thead>
+          <tbody id="resultBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button class="page-btn" id="prevBtn" onclick="changePage(-1)">← 이전</button>
+        <span class="page-info" id="pageInfo"></span>
+        <button class="page-btn" id="nextBtn" onclick="changePage(1)">다음 →</button>
+      </div>
+    </div>
+
+    <!-- 통계 차트 -->
+    <div id="panel-charts" class="panel">
+      <div class="chart-row">
+        <div class="chart-box">
+          <div class="chart-title">장르 분포</div>
+          <div class="legend" id="genreLegend"></div>
+          <div style="position:relative;height:200px"><canvas id="genreChart"></canvas></div>
+        </div>
+        <div class="chart-box">
+          <div class="chart-title">연주 형식 TOP 12</div>
+          <div style="position:relative;height:280px"><canvas id="formChart"></canvas></div>
+        </div>
+      </div>
+      <div class="chart-box" style="margin-bottom:16px">
+        <div class="chart-title">연도별 작품 수 추이</div>
+        <div style="position:relative;height:220px"><canvas id="trendChart"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">연주 악기 빈도</div>
+        <div style="position:relative;height:180px"><canvas id="instrChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- 히트맵 -->
+    <div id="panel-heatmap" class="panel">
+      <div class="hm-controls">
+        <span>연도 범위</span>
+        <input type="range" id="hmFrom" min="1970" max="2018" value="1990" step="1" oninput="hmUpdateRange()">
+        <input type="range" id="hmTo"   min="1970" max="2018" value="2018" step="1" oninput="hmUpdateRange()">
+        <span id="hmRangeLabel" style="font-weight:500;color:var(--text)">1990 – 2018</span>
+        <div class="mode-btns">
+          <button class="mode-btn on" id="btnAbs"  onclick="hmSetMode('abs')">절대값</button>
+          <button class="mode-btn"    id="btnNorm" onclick="hmSetMode('norm')">비율</button>
+        </div>
+      </div>
+      <div style="position:relative">
+        <div class="hm-wrap"><div class="hm-grid-outer" id="hmGridOuter"></div></div>
+        <div class="tooltip" id="hmTooltip"><div class="tt-main" id="ttMain"></div><div class="tt-sub" id="ttSub"></div></div>
+      </div>
+      <div class="legend-strip">
+        <span>적음</span><div class="legend-strip-cells" id="hmLegend"></div><span>많음</span>
+      </div>
+      <div class="bottom-charts">
+        <div class="chart-box"><div class="chart-title">월별 총 공연 수</div><div id="monthBars"></div></div>
+        <div class="chart-box"><div class="chart-title">연도별 총 공연 수</div><div id="yearBars" style="max-height:200px;overflow-y:auto"></div></div>
+      </div>
+    </div>
+
+    <!-- 랭킹 -->
+    <div id="panel-rank" class="panel">
+      <div class="rank-cols">
+        <div>
+          <div class="rank-box-title">작곡가 TOP 20 (전체)</div>
+          <div class="rank-list" id="rankList"></div>
+        </div>
+        <div>
+          <div class="rank-box-title">형식별 작곡가 랭킹</div>
+          <div class="form-sel-wrap"><select id="formFilter" onchange="updateFormRank()"><option value="">전체 형식</option></select></div>
+          <div class="rank-list" id="formRankList"></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const MONTHS = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+let WORKS = [], STATS = {};
+let filteredWorks = [], currentPage = 0;
+const PAGE = 30;
+let hmMode = 'abs', hmFrom = 1990, hmTo = 2018;
+let chartsBuilt = false, hmBuilt = false;
+
+const isDark = matchMedia('(prefers-color-scheme: dark)').matches;
+const textColor = isDark ? '#888780' : '#888780';
+const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.06)';
+
+async function init() {
+  try {
+    const res = await fetch('kugak.json');
+    const data = await res.json();
+    WORKS = data.works;
+    STATS = data.stats;
+
+    const composerSet = new Set(WORKS.map(w=>w.c).filter(Boolean));
+    const formSet = new Set(WORKS.map(w=>w.f2).filter(Boolean));
+    document.getElementById('mTotal').textContent = WORKS.length.toLocaleString();
+    document.getElementById('mComposers').textContent = composerSet.size.toLocaleString();
+    document.getElementById('mForms').textContent = formSet.size;
+    document.getElementById('totalBadge').textContent = WORKS.length.toLocaleString() + '개 작품';
+
+    const topForms = Object.keys(STATS.forms).slice(0,15);
+    ['fForm','formFilter'].forEach(id => {
+      const sel = document.getElementById(id);
+      topForms.forEach(f => { const o = document.createElement('option'); o.value=f; o.textContent=f; sel.appendChild(o); });
+    });
+
+    filteredWorks = WORKS.slice();
+    renderTable();
+
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loading').innerHTML = '<p style="color:#E24B4A">데이터를 불러오지 못했습니다.<br>kugak.json 파일이 같은 폴더에 있는지 확인해주세요.</p>';
+  }
+}
+
+function switchTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id === 'charts' && !chartsBuilt) { buildCharts(); chartsBuilt = true; }
+  if(id === 'heatmap' && !hmBuilt) { buildHeatmap(); hmBuilt = true; }
+  if(id === 'rank') updateFormRank();
+}
+
+// ── 검색 ──
+function doSearch() {
+  const q = (document.getElementById('q').value||'').toLowerCase();
+  const g = document.getElementById('fGenre').value;
+  const f = document.getElementById('fForm').value;
+  filteredWorks = WORKS.filter(w => {
+    if(g && w.f1 !== g) return false;
+    if(f && !w.f2.includes(f)) return false;
+    if(q) { const hay=(w.t+w.c+w.n+w.f3).toLowerCase(); if(!hay.includes(q)) return false; }
+    return true;
+  });
+  currentPage = 0;
+  renderTable();
+}
+
+function renderTable() {
+  const total = filteredWorks.length;
+  const start = currentPage * PAGE;
+  const page = filteredWorks.slice(start, start + PAGE);
+  document.getElementById('resultInfo').textContent = total.toLocaleString() + '개 작품 검색됨';
+  const tbody = document.getElementById('resultBody');
+  tbody.innerHTML = '';
+  if(!page.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--muted)">검색 결과가 없습니다</td></tr>';
+  } else {
+    page.forEach(w => {
+      const bc = w.f1==='성악'?'b-vocal':w.f1==='극음악'?'b-drama':w.f1==='기악'?'b-instr':'b-etc';
+      tbody.innerHTML += `<tr>
+        <td style="font-weight:500;min-width:130px">${w.t||'—'}</td>
+        <td><span class="badge ${bc}">${w.f1||'—'}</span></td>
+        <td style="white-space:nowrap;color:var(--muted)">${w.f2||'—'}</td>
+        <td style="white-space:nowrap;color:var(--muted)">${w.f3||'—'}</td>
+        <td style="white-space:nowrap">${w.c||'—'}</td>
+        <td style="white-space:nowrap;color:var(--muted)">${w.d||'—'}</td>
+        <td style="max-width:200px;color:var(--muted);font-size:12px">${w.n||'—'}</td>
+        <td style="white-space:nowrap;color:var(--hint);font-size:12px">${w.p||'—'}</td>
+      </tr>`;
+    });
+  }
+  const tp = Math.ceil(total/PAGE)||1;
+  document.getElementById('pageInfo').textContent = `${currentPage+1} / ${tp}`;
+  document.getElementById('prevBtn').disabled = currentPage === 0;
+  document.getElementById('nextBtn').disabled = currentPage >= tp-1;
+}
+
+function changePage(d) {
+  const tp = Math.ceil(filteredWorks.length/PAGE)||1;
+  currentPage = Math.max(0, Math.min(tp-1, currentPage+d));
+  renderTable();
+  document.querySelector('.content').scrollIntoView({behavior:'smooth'});
+}
+
+// ── 차트 ──
+function buildCharts() {
+  const COLORS = ['#185FA5','#1D9E75','#BA7517','#888780','#D85A30'];
+  const gL = Object.keys(STATS.genres), gD = Object.values(STATS.genres);
+  const gTotal = gD.reduce((a,b)=>a+b,0);
+  const leg = document.getElementById('genreLegend');
+  gL.slice(0,4).forEach((l,i) => {
+    leg.innerHTML += `<span><i style="background:${COLORS[i]}"></i>${l} ${Math.round(gD[i]/gTotal*100)}%</span>`;
+  });
+  new Chart(document.getElementById('genreChart'),{type:'doughnut',data:{labels:gL.slice(0,4),datasets:[{data:gD.slice(0,4),backgroundColor:COLORS.slice(0,4),borderWidth:3,borderColor:isDark?'#2c2c2a':'#fff'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},cutout:'62%'}});
+
+  const fL = Object.keys(STATS.forms), fD = Object.values(STATS.forms);
+  new Chart(document.getElementById('formChart'),{type:'bar',data:{labels:fL,datasets:[{data:fD,backgroundColor:'#185FA5',borderWidth:0,borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.x.toLocaleString()}곡`}}},scales:{x:{ticks:{color:textColor},grid:{color:gridColor}},y:{ticks:{color:textColor},grid:{display:false}}}}});
+
+  const yE = Object.entries(STATS.year_counts).sort((a,b)=>a[0]-b[0]);
+  new Chart(document.getElementById('trendChart'),{type:'line',data:{labels:yE.map(e=>e[0]),datasets:[{data:yE.map(e=>e[1]),borderColor:'#185FA5',backgroundColor:'rgba(24,95,165,0.07)',fill:true,tension:0.4,pointRadius:0,borderWidth:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:c=>`${c[0].label}년`,label:c=>` ${c.parsed.y}곡`}}},scales:{x:{ticks:{color:textColor,autoSkip:true,maxTicksLimit:14,maxRotation:45},grid:{color:gridColor}},y:{ticks:{color:textColor},grid:{color:gridColor}}}}});
+
+  const iL = Object.keys(STATS.instr), iD = Object.values(STATS.instr);
+  new Chart(document.getElementById('instrChart'),{type:'bar',data:{labels:iL,datasets:[{data:iD,backgroundColor:'#1D9E75',borderWidth:0,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.y.toLocaleString()}건`}}},scales:{x:{ticks:{color:textColor,autoSkip:false,maxRotation:0},grid:{display:false}},y:{ticks:{color:textColor},grid:{color:gridColor}}}}});
+}
+
+// ── 히트맵 ──
+function colorScale(t) {
+  const stops=[[0xE6,0xF1,0xFB],[0xB5,0xD4,0xF4],[0x85,0xB7,0xEB],[0x37,0x8A,0xDD],[0x18,0x5F,0xA5],[0x0C,0x44,0x7C],[0x04,0x2C,0x53]];
+  if(t<=0) return `rgb(${stops[0].join(',')})`;
+  if(t>=1) return `rgb(${stops[stops.length-1].join(',')})`;
+  const sc=t*(stops.length-1),i=Math.floor(sc),f=sc-i,a=stops[i],b=stops[i+1];
+  return `rgb(${Math.round(a[0]+(b[0]-a[0])*f)},${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)})`;
+}
+
+function buildHeatmap() {
+  const lc = document.getElementById('hmLegend');
+  for(let i=0;i<=8;i++){const d=document.createElement('div');d.className='legend-strip-cell';d.style.background=colorScale(i/8);lc.appendChild(d);}
+  renderHeatmap();
+  renderMonthBars();
+}
+
+function renderHeatmap() {
+  const hm = STATS.heatmap;
+  const yrs = Object.keys(hm).map(Number).filter(y=>y>=hmFrom&&y<=hmTo).sort((a,b)=>a-b);
+  if(!yrs.length) return;
+  const CELL_W = Math.max(9, Math.min(17, Math.floor(560/yrs.length)));
+  const CELL_H = 14;
+  let maxAbs = 0;
+  yrs.forEach(y=>{for(let m=1;m<=12;m++){const v=+(hm[y]||{})[m]||0;if(v>maxAbs)maxAbs=v;}});
+
+  const outer = document.getElementById('hmGridOuter');
+  outer.style.gridTemplateColumns = `32px 1fr`;
+  outer.innerHTML = '';
+
+  const yAxis = document.createElement('div');
+  yAxis.className = 'hm-y-axis';
+  yAxis.style.paddingTop = '24px';
+  MONTHS.forEach(m => {
+    const lbl = document.createElement('div');
+    lbl.className = 'hm-y-lbl';
+    lbl.style.height = (CELL_H+1)+'px';
+    lbl.textContent = m;
+    yAxis.appendChild(lbl);
+  });
+  outer.appendChild(yAxis);
+
+  const right = document.createElement('div');
+  right.className = 'hm-right';
+
+  const xAxis = document.createElement('div');
+  xAxis.className = 'hm-x-axis';
+  xAxis.style.gap = '1px';
+  yrs.forEach(y => {
+    const lbl = document.createElement('div');
+    lbl.className = 'hm-x-lbl';
+    lbl.style.width = CELL_W+'px';
+    lbl.style.fontSize = CELL_W<11?'7px':'9px';
+    lbl.textContent = String(y);
+    xAxis.appendChild(lbl);
+  });
+  right.appendChild(xAxis);
+
+  const rows = document.createElement('div');
+  rows.className = 'hm-rows';
+  const tt = document.getElementById('hmTooltip');
+
+  for(let mi=0;mi<12;mi++) {
+    const row = document.createElement('div');
+    row.className = 'hm-row';
+    row.style.gap = '1px';
+    yrs.forEach(y => {
+      const raw = +(hm[y]||{})[mi+1]||0;
+      let ytot=0; for(let m=1;m<=12;m++) ytot+=+(hm[y]||{})[m]||0;
+      const norm = ytot>0 ? raw/ytot : 0;
+      const t = hmMode==='abs' ? (maxAbs>0?raw/maxAbs:0) : norm;
+      const cell = document.createElement('div');
+      cell.className = 'hm-cell';
+      cell.style.width = CELL_W+'px';
+      cell.style.height = CELL_H+'px';
+      cell.style.background = colorScale(t);
+      cell.addEventListener('mouseenter', e => {
+        document.getElementById('ttMain').textContent = `${y}년 ${MONTHS[mi]} — ${raw.toLocaleString()}건`;
+        document.getElementById('ttSub').textContent = `연도 내 비율: ${ytot>0?Math.round(raw/ytot*100):0}% · 연도 합계: ${ytot.toLocaleString()}건`;
+        tt.style.display = 'block';
+        const cr = cell.getBoundingClientRect(), or = outer.getBoundingClientRect();
+        let lx = cr.left-or.left+CELL_W+6, ty = cr.top-or.top;
+        tt.style.left = lx+'px'; tt.style.top = ty+'px';
+      });
+      cell.addEventListener('mouseleave', () => tt.style.display='none');
+      row.appendChild(cell);
+    });
+    rows.appendChild(row);
+  }
+  right.appendChild(rows);
+  outer.appendChild(right);
+  renderYearBars(yrs);
+}
+
+function renderMonthBars() {
+  const mc = STATS.month_counts;
+  const max = Math.max(...Object.values(mc));
+  const el = document.getElementById('monthBars');
+  el.innerHTML = '';
+  MONTHS.forEach((m,i) => {
+    const v = mc[i+1]||0;
+    el.innerHTML += `<div class="bar-row"><span class="bar-lbl">${m}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/max*100)}%;background:#185FA5"></div></div><span class="bar-val">${v.toLocaleString()}</span></div>`;
+  });
+}
+
+function renderYearBars(yrs) {
+  const yc = STATS.year_counts;
+  const vals = yrs.map(y => yc[y]||0);
+  const max = Math.max(...vals,1);
+  const el = document.getElementById('yearBars');
+  el.innerHTML = '';
+  yrs.forEach((y,i) => {
+    el.innerHTML += `<div class="bar-row"><span class="bar-lbl" style="min-width:30px">${y}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(vals[i]/max*100)}%;background:#1D9E75"></div></div><span class="bar-val">${(vals[i]||0).toLocaleString()}</span></div>`;
+  });
+}
+
+function hmUpdateRange() {
+  let f = parseInt(document.getElementById('hmFrom').value);
+  let t = parseInt(document.getElementById('hmTo').value);
+  if(f>t){const tmp=f;f=t;t=tmp;}
+  hmFrom=f; hmTo=t;
+  document.getElementById('hmRangeLabel').textContent = `${f} – ${t}`;
+  renderHeatmap();
+}
+
+function hmSetMode(m) {
+  hmMode=m;
+  document.getElementById('btnAbs').classList.toggle('on',m==='abs');
+  document.getElementById('btnNorm').classList.toggle('on',m==='norm');
+  renderHeatmap();
+}
+
+// ── 랭킹 ──
+function buildRankList(items, elId, maxVal) {
+  document.getElementById(elId).innerHTML = '';
+  items.forEach(([name,cnt],i) => {
+    document.getElementById(elId).innerHTML += `<div class="rank-item"><span class="rank-num">${i+1}</span><span class="rank-name">${name}</span><div class="rank-bar-wrap"><div class="rank-bar" style="width:${Math.round(cnt/maxVal*100)}%"></div></div><span class="rank-count">${cnt}곡</span></div>`;
+  });
+}
+
+function updateFormRank() {
+  const top20 = STATS.composers_top;
+  if(top20 && top20.length) buildRankList(top20,'rankList',top20[0][1]);
+
+  const fv = document.getElementById('formFilter').value;
+  const cnt = {};
+  WORKS.forEach(w => {
+    if(fv && !w.f2.includes(fv)) return;
+    if(w.c) w.c.split(/[·,\/＆&]/).forEach(c => { c=c.trim(); if(c&&c.length>1) cnt[c]=(cnt[c]||0)+1; });
+  });
+  const sorted = Object.entries(cnt).sort((a,b)=>b[1]-a[1]).slice(0,15);
+  if(!sorted.length) { document.getElementById('formRankList').innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px">결과 없음</div>'; return; }
+  buildRankList(sorted,'formRankList',sorted[0][1]);
+}
+
+init();
+</script>
+</body>
+</html>

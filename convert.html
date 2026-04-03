@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>국악 DB · CSV → JSON 변환기</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--border:#e5e4df;--border2:#d3d1c7;
+  --text:#1a1a18;--muted:#888780;--hint:#b4b2a9;
+  --blue:#185FA5;--blue-light:#e6f1fb;--blue-text:#0C447C;
+  --teal:#1D9E75;--teal-light:#e1f5ee;--teal-text:#085041;
+  --amber:#BA7517;--amber-light:#faeeda;--amber-text:#633806;
+  --red:#A32D2D;--red-light:#fcebeb;--red-text:#791F1F;
+  --gray:#f1efe8;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;
+  background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh}
+
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px}
+.header h1{font-size:17px;font-weight:600}
+.header p{font-size:12px;color:var(--muted);margin-top:2px}
+
+.main{max-width:780px;margin:32px auto;padding:0 24px 60px}
+
+/* 드롭존 */
+.drop-zone{border:2px dashed var(--border2);border-radius:14px;padding:48px 32px;
+  text-align:center;background:var(--surface);cursor:pointer;transition:all .2s;position:relative}
+.drop-zone.drag{border-color:var(--blue);background:var(--blue-light)}
+.drop-zone.has-file{border-color:var(--teal);border-style:solid;background:var(--teal-light)}
+.drop-icon{font-size:40px;margin-bottom:12px}
+.drop-title{font-size:16px;font-weight:500;margin-bottom:6px}
+.drop-sub{font-size:13px;color:var(--muted)}
+.drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.file-name{margin-top:10px;font-size:13px;font-weight:500;color:var(--teal-text)}
+
+/* 구분자 선택 */
+.options{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin:16px 0}
+.options-title{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.radio-row{display:flex;gap:20px;flex-wrap:wrap}
+.radio-row label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
+.encoding-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:10px}
+
+/* 미리보기 */
+.preview{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin:16px 0;display:none}
+.preview-title{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+.preview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.preview-chip{background:var(--gray);border-radius:7px;padding:8px 12px}
+.preview-chip .label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.preview-chip .val{font-size:15px;font-weight:600;margin-top:2px}
+.preview-chip .sub{font-size:10px;color:var(--hint);margin-top:1px}
+.field-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:12px}
+.field-table th{background:var(--gray);padding:6px 10px;text-align:left;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border)}
+.field-table td{padding:5px 10px;border-bottom:1px solid var(--border)}
+.field-table tr:last-child td{border-bottom:none}
+.field-table .pct{text-align:right;font-weight:500}
+.pct-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;width:80px}
+.pct-fill{height:100%;border-radius:3px;background:var(--blue)}
+
+/* 진행 */
+.progress-wrap{display:none;margin:16px 0}
+.progress-label{font-size:13px;color:var(--muted);margin-bottom:6px}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:var(--blue);transition:width .15s;width:0%}
+.progress-text{font-size:12px;color:var(--hint);margin-top:4px}
+
+/* 결과 */
+.result{background:var(--teal-light);border:1px solid;border-color:rgba(29,158,117,.3);
+  border-radius:10px;padding:16px 20px;margin:16px 0;display:none}
+.result-title{font-size:13px;font-weight:500;color:var(--teal-text);margin-bottom:8px}
+.result-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.result-stat{background:rgba(255,255,255,.6);border-radius:7px;padding:8px 12px}
+.result-stat .label{font-size:10px;color:var(--teal-text);opacity:.7;text-transform:uppercase}
+.result-stat .val{font-size:15px;font-weight:600;color:var(--teal-text);margin-top:1px}
+
+.error{background:var(--red-light);border:1px solid rgba(163,45,45,.25);
+  border-radius:10px;padding:14px 18px;margin:16px 0;display:none;color:var(--red-text);font-size:13px}
+
+/* 버튼 */
+.btn-row{display:flex;gap:10px;margin-top:4px}
+.btn{padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;
+  border:1px solid var(--border2);background:var(--surface);color:var(--text);
+  font-family:inherit;transition:all .12s}
+.btn:hover{background:var(--gray)}
+.btn:disabled{opacity:.35;cursor:default}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover:not(:disabled){background:#0C447C}
+.btn-dl{background:var(--teal);color:#fff;border-color:var(--teal)}
+.btn-dl:hover{background:#085041}
+
+/* 안내 */
+.guide{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-top:24px}
+.guide-title{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
+.guide-step{display:flex;gap:10px;margin-bottom:8px;font-size:13px}
+.guide-num{width:22px;height:22px;border-radius:50%;background:var(--blue-light);
+  color:var(--blue-text);font-size:11px;font-weight:600;display:flex;align-items:center;
+  justify-content:center;flex-shrink:0;margin-top:1px}
+.mapping-table{width:100%;border-collapse:collapse;font-size:12px;margin-top:8px}
+.mapping-table th{background:var(--gray);padding:5px 10px;text-align:left;color:var(--muted);font-weight:500;border-bottom:1px solid var(--border)}
+.mapping-table td{padding:4px 10px;border-bottom:1px solid var(--border);font-family:monospace}
+.mapping-table tr:last-child td{border-bottom:none}
+.arrow{color:var(--hint)}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>국악 DB · CSV → JSON 변환기</h1>
+  <p>CSV 파일을 kugak.json으로 변환합니다 · 브라우저에서 바로 실행 (인터넷 불필요)</p>
+</div>
+
+<div class="main">
+
+  <!-- 드롭존 -->
+  <div class="drop-zone" id="dropZone">
+    <input type="file" id="fileInput" accept=".csv,.tsv,.txt">
+    <div class="drop-icon">📂</div>
+    <div class="drop-title">CSV 파일을 여기에 드래그하거나 클릭해서 선택</div>
+    <div class="drop-sub">Pivot_tabel_EX.CSV 또는 동일한 형식의 파일</div>
+    <div class="file-name" id="fileName"></div>
+  </div>
+
+  <!-- 옵션 -->
+  <div class="options">
+    <div class="options-title">파일 설정</div>
+    <div class="radio-row">
+      <span style="font-size:12px;color:var(--muted);align-self:center">구분자</span>
+      <label><input type="radio" name="delim" value="tab" checked> 탭 (Tab · .tsv)</label>
+      <label><input type="radio" name="delim" value="comma"> 쉼표 (Comma · .csv)</label>
+      <label><input type="radio" name="delim" value="auto"> 자동 감지</label>
+    </div>
+    <div class="encoding-row">
+      <span style="font-size:12px;color:var(--muted);align-self:center">인코딩</span>
+      <label><input type="radio" name="enc" value="utf-8-sig" checked> UTF-8 (BOM 포함)</label>
+      <label><input type="radio" name="enc" value="utf-8"> UTF-8</label>
+      <label><input type="radio" name="enc" value="euc-kr"> EUC-KR (CP949)</label>
+    </div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-primary" id="convertBtn" onclick="startConvert()" disabled>JSON 변환 시작</button>
+    <button class="btn btn-dl" id="downloadBtn" onclick="downloadJSON()" style="display:none">kugak.json 다운로드</button>
+    <button class="btn" onclick="reset()">초기화</button>
+  </div>
+
+  <!-- 진행 -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-label" id="progressLabel">파일 읽는 중...</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText"></div>
+  </div>
+
+  <!-- 오류 -->
+  <div class="error" id="errorBox"></div>
+
+  <!-- 미리보기 -->
+  <div class="preview" id="previewBox">
+    <div class="preview-title">파일 미리보기</div>
+    <div class="preview-grid" id="previewGrid"></div>
+    <table class="field-table" style="margin-top:14px">
+      <thead><tr><th>CSV 컬럼</th><th>JSON 키</th><th>채움률</th><th></th></tr></thead>
+      <tbody id="fieldTableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- 결과 -->
+  <div class="result" id="resultBox">
+    <div class="result-title">✓ 변환 완료</div>
+    <div class="result-stats" id="resultStats"></div>
+    <div style="font-size:12px;color:var(--teal-text)">위의 <strong>kugak.json 다운로드</strong> 버튼을 눌러 파일을 저장하세요.<br>
+    저장한 파일을 GitHub 저장소의 기존 kugak.json과 교체하면 반영됩니다.</div>
+  </div>
+
+  <!-- 안내 -->
+  <div class="guide">
+    <div class="guide-title">사용 방법</div>
+    <div class="guide-step"><span class="guide-num">1</span><span>CSV 파일을 위 영역에 드래그하거나 클릭해서 선택합니다.</span></div>
+    <div class="guide-step"><span class="guide-num">2</span><span>구분자와 인코딩을 확인합니다. (기본값: 탭·UTF-8 BOM)</span></div>
+    <div class="guide-step"><span class="guide-num">3</span><span><strong>JSON 변환 시작</strong>을 클릭합니다.</span></div>
+    <div class="guide-step"><span class="guide-num">4</span><span><strong>kugak.json 다운로드</strong>로 파일을 받아 GitHub에 업로드합니다.</span></div>
+
+    <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
+      <div class="guide-title" style="margin-bottom:8px">컬럼 매핑 (CSV → JSON)</div>
+      <table class="mapping-table">
+        <thead><tr><th>CSV 컬럼명</th><th></th><th>JSON 키</th><th>설명</th></tr></thead>
+        <tbody>
+          <tr><td>title</td><td class="arrow">→</td><td>t</td><td>작품 제목</td></tr>
+          <tr><td>form1</td><td class="arrow">→</td><td>f1</td><td>장르 (기악·성악·극음악)</td></tr>
+          <tr><td>form2</td><td class="arrow">→</td><td>f2</td><td>연주 형식 (독주·합주 등)</td></tr>
+          <tr><td>form3</td><td class="arrow">→</td><td>f3</td><td>악기·분류</td></tr>
+          <tr><td>composer</td><td class="arrow">→</td><td>c</td><td>작곡가</td></tr>
+          <tr><td>arrangement</td><td class="arrow">→</td><td>ar</td><td>편곡</td></tr>
+          <tr><td>lyric</td><td class="arrow">→</td><td>ly</td><td>작사</td></tr>
+          <tr><td>constructure</td><td class="arrow">→</td><td>cs</td><td>구성</td></tr>
+          <tr><td>perform_date</td><td class="arrow">→</td><td>d</td><td>공연일</td></tr>
+          <tr><td>perform_name</td><td class="arrow">→</td><td>n</td><td>공연명</td></tr>
+          <tr><td>perform_place</td><td class="arrow">→</td><td>p</td><td>공연 장소</td></tr>
+          <tr><td>perform_play</td><td class="arrow">→</td><td>pp</td><td>연주자</td></tr>
+          <tr><td>note</td><td class="arrow">→</td><td>nt</td><td>비고</td></tr>
+          <tr><td>commentary</td><td class="arrow">→</td><td>cm</td><td>작품 해설</td></tr>
+          <tr><td>add_note</td><td class="arrow">→</td><td>an</td><td>추가 정보</td></tr>
+          <tr><td>note_02</td><td class="arrow">→</td><td>n2</td><td>보충 해설</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let rawText = '';
+let resultJSON = null;
+
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+// ── 드래그&드롭 ──
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault(); dropZone.classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) loadFile(file);
+});
+fileInput.addEventListener('change', () => { if (fileInput.files[0]) loadFile(fileInput.files[0]); });
+
+function loadFile(file) {
+  document.getElementById('fileName').textContent = '📄 ' + file.name;
+  dropZone.classList.add('has-file');
+  document.getElementById('convertBtn').disabled = false;
+  document.getElementById('downloadBtn').style.display = 'none';
+  hide('resultBox'); hide('errorBox'); hide('previewBox');
+  resultJSON = null;
+
+  const enc = document.querySelector('input[name=enc]:checked').value;
+  const reader = new FileReader();
+  reader.onload = e => {
+    rawText = e.target.result;
+    showPreview(rawText, file.name);
+  };
+  if (enc === 'euc-kr') {
+    reader.readAsText(file, 'EUC-KR');
+  } else {
+    reader.readAsText(file, 'UTF-8');
+  }
+}
+
+// ── 미리보기 ──
+function showPreview(text, fname) {
+  const delim = detectDelim(text);
+  const rows = parseCSV(text, delim);
+  if (!rows.length) return;
+  const headers = rows[0];
+  const dataRows = rows.slice(1).filter(r => r.some(c => c.trim()));
+  const total = dataRows.length;
+
+  const FIELD_MAP = {
+    title:'t',form1:'f1',form2:'f2',form3:'f3',composer:'c',
+    arrangement:'ar',lyric:'ly',constructure:'cs',
+    perform_date:'d',perform_name:'n',perform_place:'p',perform_play:'pp',
+    note:'nt',commentary:'cm',add_note:'an',note_02:'n2'
+  };
+
+  // 통계 칩
+  document.getElementById('previewGrid').innerHTML = `
+    <div class="preview-chip"><div class="label">총 행</div><div class="val">${total.toLocaleString()}</div><div class="sub">헤더 제외</div></div>
+    <div class="preview-chip"><div class="label">컬럼 수</div><div class="val">${headers.length}</div></div>
+    <div class="preview-chip"><div class="label">구분자</div><div class="val">${delim==='\t'?'TAB':','}</div></div>
+    <div class="preview-chip"><div class="label">매핑 컬럼</div><div class="val">${headers.filter(h=>FIELD_MAP[h.trim()]).length}개</div></div>
+  `;
+
+  // 필드 테이블
+  const tbody = document.getElementById('fieldTableBody');
+  tbody.innerHTML = '';
+  headers.forEach((h, hi) => {
+    h = h.trim();
+    const jsonKey = FIELD_MAP[h] || '(미사용)';
+    const filled = dataRows.filter(r => (r[hi]||'').trim()).length;
+    const pct = total > 0 ? Math.round(filled/total*100) : 0;
+    const color = pct > 80 ? '#1D9E75' : pct > 30 ? '#185FA5' : '#888780';
+    tbody.innerHTML += `<tr>
+      <td><code>${h}</code></td>
+      <td style="color:var(--muted)">${jsonKey}</td>
+      <td class="pct" style="color:${color}">${pct}%</td>
+      <td><div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${color}"></div></div></td>
+    </tr>`;
+  });
+
+  show('previewBox');
+}
+
+// ── 변환 ──
+async function startConvert() {
+  if (!rawText) return;
+  hide('resultBox'); hide('errorBox');
+  show('progressWrap');
+  document.getElementById('convertBtn').disabled = true;
+  document.getElementById('downloadBtn').style.display = 'none';
+
+  try {
+    setProgress(10, '파일 파싱 중...');
+    await tick();
+
+    const delim = detectDelim(rawText);
+    const rows = parseCSV(rawText, delim);
+    if (rows.length < 2) throw new Error('데이터가 없습니다. 구분자 설정을 확인하세요.');
+
+    const headers = rows[0].map(h => h.trim());
+    const dataRows = rows.slice(1).filter(r => r.some(c => c.trim()));
+
+    setProgress(20, `${dataRows.length.toLocaleString()}개 행 처리 중...`);
+    await tick();
+
+    const FIELD_MAP = {
+      title:'t',form1:'f1',form2:'f2',form3:'f3',composer:'c',
+      arrangement:'ar',lyric:'ly',constructure:'cs',
+      perform_date:'d',perform_name:'n',perform_place:'p',perform_play:'pp',
+      note:'nt',commentary:'cm',add_note:'an',note_02:'n2'
+    };
+
+    // works 생성
+    const works = [];
+    const CHUNK = 500;
+    for (let i = 0; i < dataRows.length; i += CHUNK) {
+      const chunk = dataRows.slice(i, i + CHUNK);
+      chunk.forEach(row => {
+        const w = {};
+        headers.forEach((h, hi) => {
+          const key = FIELD_MAP[h];
+          if (key) w[key] = (row[hi] || '').trim();
+        });
+        // 필수 필드 기본값
+        Object.values(FIELD_MAP).forEach(k => { if (!(k in w)) w[k] = ''; });
+        works.push(w);
+      });
+      const pct = 20 + Math.round((i / dataRows.length) * 50);
+      setProgress(pct, `${Math.min(i+CHUNK, dataRows.length).toLocaleString()} / ${dataRows.length.toLocaleString()} 처리 중...`);
+      await tick();
+    }
+
+    setProgress(72, '통계 계산 중...');
+    await tick();
+
+    const stats = calcStats(works);
+
+    setProgress(90, 'JSON 직렬화 중...');
+    await tick();
+
+    resultJSON = JSON.stringify({works, stats}, null, null);
+
+    setProgress(100, '완료!');
+    await tick();
+
+    // 결과 표시
+    hide('progressWrap');
+    showResultStats(works, stats, resultJSON.length);
+    show('resultBox');
+    document.getElementById('downloadBtn').style.display = 'inline-block';
+  } catch(e) {
+    hide('progressWrap');
+    showError(e.message);
+  } finally {
+    document.getElementById('convertBtn').disabled = false;
+  }
+}
+
+// ── 통계 계산 ──
+function calcStats(works) {
+  const counter = obj => {
+    const c = {};
+    obj.forEach(v => { if(v) c[v] = (c[v]||0)+1; });
+    return c;
+  };
+
+  const genres = {}, forms = {}, yearC = {}, monthC = {};
+  const hm = {}, instrC = {};
+  const INSTR = ['가야금','대금','거문고','해금','피리','아쟁','장구','소금','양금','생황','타악','첼로','피아노','기타','바이올린'];
+  const composerC = {};
+
+  works.forEach(w => {
+    if (w.f1 && w.f1.length < 20) genres[w.f1] = (genres[w.f1]||0)+1;
+    if (w.f2) forms[w.f2] = (forms[w.f2]||0)+1;
+    if (w.c && !['민요','전래','작자미상'].includes(w.c)) composerC[w.c] = (composerC[w.c]||0)+1;
+    INSTR.forEach(ins => { if ((w.pp||'').includes(ins)) instrC[ins] = (instrC[ins]||0)+1; });
+
+    const ym = w.d.match(/(1[89]\d{2}|20[012]\d)/);
+    if (ym) {
+      const y = ym[1];
+      yearC[y] = (yearC[y]||0)+1;
+      const mo = w.d.match(/(1[89]\d{2}|20[012]\d)[.\-\/](\d{1,2})/);
+      if (mo) {
+        const m = parseInt(mo[2]);
+        if (m >= 1 && m <= 12) {
+          monthC[m] = (monthC[m]||0)+1;
+          if (!hm[y]) hm[y] = {};
+          hm[y][m] = (hm[y][m]||0)+1;
+        }
+      }
+    }
+  });
+
+  // 연도 히트맵 범위
+  const hmFull = {};
+  Object.keys(hm).filter(y => parseInt(y) >= 1970).sort().forEach(y => {
+    hmFull[y] = {};
+    for (let m = 1; m <= 12; m++) hmFull[y][m] = hm[y][m] || 0;
+  });
+
+  const sortedComposers = Object.entries(composerC).sort((a,b)=>b[1]-a[1]).slice(0,20);
+  const sortedForms = Object.fromEntries(Object.entries(forms).sort((a,b)=>b[1]-a[1]).slice(0,12));
+  const sortedYear = Object.fromEntries(Object.entries(yearC).filter(([y])=>parseInt(y)>=1950).sort((a,b)=>a[0].localeCompare(b[0])));
+  const sortedMonth = Object.fromEntries(Object.entries(monthC).sort((a,b)=>parseInt(a[0])-parseInt(b[0])));
+  const sortedInstr = Object.fromEntries(Object.entries(instrC).sort((a,b)=>b[1]-a[1]));
+
+  return {
+    total: works.length,
+    genres: Object.fromEntries(Object.entries(genres).sort((a,b)=>b[1]-a[1]).slice(0,6)),
+    forms: sortedForms,
+    composers_top: sortedComposers,
+    year_counts: sortedYear,
+    month_counts: sortedMonth,
+    heatmap: hmFull,
+    instr: sortedInstr,
+  };
+}
+
+// ── 다운로드 ──
+function downloadJSON() {
+  if (!resultJSON) return;
+  const blob = new Blob([resultJSON], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'kugak.json'; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── 결과 통계 ──
+function showResultStats(works, stats, byteLen) {
+  const hasCm = works.filter(w=>w.cm).length;
+  const hasNt = works.filter(w=>w.nt).length;
+  const hasN2 = works.filter(w=>w.n2).length;
+  document.getElementById('resultStats').innerHTML = `
+    <div class="result-stat"><div class="label">작품 수</div><div class="val">${works.length.toLocaleString()}</div></div>
+    <div class="result-stat"><div class="label">파일 크기</div><div class="val">${(byteLen/1024).toFixed(0)} KB</div></div>
+    <div class="result-stat"><div class="label">작품해설</div><div class="val">${hasCm.toLocaleString()}개</div></div>
+    <div class="result-stat"><div class="label">비고</div><div class="val">${hasNt.toLocaleString()}개</div></div>
+    <div class="result-stat"><div class="label">보충해설(note_02)</div><div class="val">${hasN2.toLocaleString()}개</div></div>
+    <div class="result-stat"><div class="label">작곡가 수</div><div class="val">${new Set(works.map(w=>w.c).filter(Boolean)).size.toLocaleString()}</div></div>
+  `;
+}
+
+// ── CSV 파서 ──
+function parseCSV(text, delim) {
+  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
+  return lines.map(line => {
+    if (delim === ',') return parseCSVLine(line);
+    return line.split(delim);
+  });
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let cur = '', inQ = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (c === '"') { inQ = !inQ; }
+    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
+    else { cur += c; }
+  }
+  result.push(cur);
+  return result;
+}
+
+function detectDelim(text) {
+  const sel = document.querySelector('input[name=delim]:checked').value;
+  if (sel === 'tab') return '\t';
+  if (sel === 'comma') return ',';
+  // auto
+  const first = text.split('\n')[0];
+  return first.includes('\t') ? '\t' : ',';
+}
+
+// ── 유틸 ──
+function setProgress(pct, label, sub='') {
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressLabel').textContent = label;
+  document.getElementById('progressText').textContent = sub;
+}
+function show(id) { document.getElementById(id).style.display = 'block'; }
+function hide(id) { document.getElementById(id).style.display = 'none'; }
+function showError(msg) { const el=document.getElementById('errorBox'); el.textContent='오류: '+msg; el.style.display='block'; }
+function tick() { return new Promise(r => setTimeout(r, 0)); }
+
+function reset() {
+  rawText = ''; resultJSON = null;
+  document.getElementById('fileName').textContent = '';
+  dropZone.classList.remove('has-file','drag');
+  fileInput.value = '';
+  document.getElementById('convertBtn').disabled = true;
+  document.getElementById('downloadBtn').style.display = 'none';
+  hide('resultBox'); hide('errorBox'); hide('previewBox'); hide('progressWrap');
+}
+</script>
+</body>
+</html>

@@ -17,14 +17,10 @@
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;
   background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh}
-
 .header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px}
 .header h1{font-size:17px;font-weight:600}
 .header p{font-size:12px;color:var(--muted);margin-top:2px}
-
 .main{max-width:780px;margin:32px auto;padding:0 24px 60px}
-
-/* 드롭존 */
 .drop-zone{border:2px dashed var(--border2);border-radius:14px;padding:48px 32px;
   text-align:center;background:var(--surface);cursor:pointer;transition:all .2s;position:relative}
 .drop-zone.drag{border-color:var(--blue);background:var(--blue-light)}
@@ -34,15 +30,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .drop-sub{font-size:13px;color:var(--muted)}
 .drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .file-name{margin-top:10px;font-size:13px;font-weight:500;color:var(--teal-text)}
-
-/* 구분자 선택 */
 .options{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin:16px 0}
 .options-title{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
 .radio-row{display:flex;gap:20px;flex-wrap:wrap}
 .radio-row label{display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer}
 .encoding-row{display:flex;gap:20px;flex-wrap:wrap;margin-top:10px}
-
-/* 미리보기 */
 .preview{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin:16px 0;display:none}
 .preview-title{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
 .preview-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
@@ -57,15 +49,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .field-table .pct{text-align:right;font-weight:500}
 .pct-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;width:80px}
 .pct-fill{height:100%;border-radius:3px;background:var(--blue)}
-
-/* 진행 */
 .progress-wrap{display:none;margin:16px 0}
 .progress-label{font-size:13px;color:var(--muted);margin-bottom:6px}
 .progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden}
 .progress-fill{height:100%;border-radius:3px;background:var(--blue);transition:width .15s;width:0%}
 .progress-text{font-size:12px;color:var(--hint);margin-top:4px}
-
-/* 결과 */
 .result{background:var(--teal-light);border:1px solid;border-color:rgba(29,158,117,.3);
   border-radius:10px;padding:16px 20px;margin:16px 0;display:none}
 .result-title{font-size:13px;font-weight:500;color:var(--teal-text);margin-bottom:8px}
@@ -73,11 +61,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .result-stat{background:rgba(255,255,255,.6);border-radius:7px;padding:8px 12px}
 .result-stat .label{font-size:10px;color:var(--teal-text);opacity:.7;text-transform:uppercase}
 .result-stat .val{font-size:15px;font-weight:600;color:var(--teal-text);margin-top:1px}
-
 .error{background:var(--red-light);border:1px solid rgba(163,45,45,.25);
   border-radius:10px;padding:14px 18px;margin:16px 0;display:none;color:var(--red-text);font-size:13px}
-
-/* 버튼 */
 .btn-row{display:flex;gap:10px;margin-top:4px}
 .btn{padding:10px 20px;border-radius:8px;font-size:14px;cursor:pointer;
   border:1px solid var(--border2);background:var(--surface);color:var(--text);
@@ -88,8 +73,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .btn-primary:hover:not(:disabled){background:#0C447C}
 .btn-dl{background:var(--teal);color:#fff;border-color:var(--teal)}
 .btn-dl:hover{background:#085041}
-
-/* 안내 */
 .guide{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-top:24px}
 .guide-title{font-size:12px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
 .guide-step{display:flex;gap:10px;margin-bottom:8px;font-size:13px}
@@ -101,6 +84,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 .mapping-table td{padding:4px 10px;border-bottom:1px solid var(--border);font-family:monospace}
 .mapping-table tr:last-child td{border-bottom:none}
 .arrow{color:var(--hint)}
+/* 경고 배지 */
+.warn-badge{display:inline-block;background:var(--amber-light);color:var(--amber-text);
+  font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;margin-left:6px}
 </style>
 </head>
 <body>
@@ -112,7 +98,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 
 <div class="main">
 
-  <!-- 드롭존 -->
   <div class="drop-zone" id="dropZone">
     <input type="file" id="fileInput" accept=".csv,.tsv,.txt">
     <div class="drop-icon">📂</div>
@@ -121,7 +106,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
     <div class="file-name" id="fileName"></div>
   </div>
 
-  <!-- 옵션 -->
   <div class="options">
     <div class="options-title">파일 설정</div>
     <div class="radio-row">
@@ -136,6 +120,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
       <label><input type="radio" name="enc" value="utf-8"> UTF-8</label>
       <label><input type="radio" name="enc" value="euc-kr"> EUC-KR (CP949)</label>
     </div>
+    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:10px">
+      <div class="options-title" style="margin-bottom:8px">JSON 출력 옵션</div>
+      <div class="radio-row">
+        <span style="font-size:12px;color:var(--muted);align-self:center">빈 필드</span>
+        <label><input type="radio" name="emptyField" value="omit" checked> 생략 (파일 크기 최소화)</label>
+        <label><input type="radio" name="emptyField" value="keep"> 유지 (빈 문자열 포함)</label>
+      </div>
+    </div>
   </div>
 
   <div class="btn-row">
@@ -144,17 +136,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
     <button class="btn" onclick="reset()">초기화</button>
   </div>
 
-  <!-- 진행 -->
   <div class="progress-wrap" id="progressWrap">
     <div class="progress-label" id="progressLabel">파일 읽는 중...</div>
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-text" id="progressText"></div>
   </div>
 
-  <!-- 오류 -->
   <div class="error" id="errorBox"></div>
 
-  <!-- 미리보기 -->
   <div class="preview" id="previewBox">
     <div class="preview-title">파일 미리보기</div>
     <div class="preview-grid" id="previewGrid"></div>
@@ -164,7 +153,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
     </table>
   </div>
 
-  <!-- 결과 -->
   <div class="result" id="resultBox">
     <div class="result-title">✓ 변환 완료</div>
     <div class="result-stats" id="resultStats"></div>
@@ -172,14 +160,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
     저장한 파일을 GitHub 저장소의 기존 kugak.json과 교체하면 반영됩니다.</div>
   </div>
 
-  <!-- 안내 -->
   <div class="guide">
     <div class="guide-title">사용 방법</div>
     <div class="guide-step"><span class="guide-num">1</span><span>CSV 파일을 위 영역에 드래그하거나 클릭해서 선택합니다.</span></div>
     <div class="guide-step"><span class="guide-num">2</span><span>구분자와 인코딩을 확인합니다. (기본값: 탭·UTF-8 BOM)</span></div>
-    <div class="guide-step"><span class="guide-num">3</span><span><strong>JSON 변환 시작</strong>을 클릭합니다.</span></div>
-    <div class="guide-step"><span class="guide-num">4</span><span><strong>kugak.json 다운로드</strong>로 파일을 받아 GitHub에 업로드합니다.</span></div>
-
+    <div class="guide-step"><span class="guide-num">3</span><span>빈 필드 옵션을 선택합니다. (기본: 생략 — 파일 크기 감소)</span></div>
+    <div class="guide-step"><span class="guide-num">4</span><span><strong>JSON 변환 시작</strong>을 클릭합니다.</span></div>
+    <div class="guide-step"><span class="guide-num">5</span><span><strong>kugak.json 다운로드</strong>로 파일을 받아 GitHub에 업로드합니다.</span></div>
     <div style="margin-top:14px;border-top:1px solid var(--border);padding-top:14px">
       <div class="guide-title" style="margin-bottom:8px">컬럼 매핑 (CSV → JSON)</div>
       <table class="mapping-table">
@@ -209,13 +196,26 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
 </div>
 
 <script>
+// ══════════════════════════════════════════
+//  상태
+// ══════════════════════════════════════════
 let rawText = '';
+let currentFile = null;
 let resultJSON = null;
 
+const FIELD_MAP = {
+  title:'t', form1:'f1', form2:'f2', form3:'f3', composer:'c',
+  arrangement:'ar', lyric:'ly', constructure:'cs',
+  perform_date:'d', perform_name:'n', perform_place:'p', perform_play:'pp',
+  note:'nt', commentary:'cm', add_note:'an', note_02:'n2'
+};
+
+// ══════════════════════════════════════════
+//  드래그&드롭 / 파일 선택
+// ══════════════════════════════════════════
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 
-// ── 드래그&드롭 ──
 dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
 dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
 dropZone.addEventListener('drop', e => {
@@ -225,7 +225,16 @@ dropZone.addEventListener('drop', e => {
 });
 fileInput.addEventListener('change', () => { if (fileInput.files[0]) loadFile(fileInput.files[0]); });
 
+// 인코딩 변경 시 파일 재로드
+document.querySelectorAll('input[name=enc]').forEach(r =>
+  r.addEventListener('change', () => { if (currentFile) loadFile(currentFile); })
+);
+
+// ══════════════════════════════════════════
+//  파일 읽기
+// ══════════════════════════════════════════
 function loadFile(file) {
+  currentFile = file;
   document.getElementById('fileName').textContent = '📄 ' + file.name;
   dropZone.classList.add('has-file');
   document.getElementById('convertBtn').disabled = false;
@@ -236,61 +245,142 @@ function loadFile(file) {
   const enc = document.querySelector('input[name=enc]:checked').value;
   const reader = new FileReader();
   reader.onload = e => {
-    rawText = e.target.result;
-    showPreview(rawText, file.name);
+    // UTF-8 BOM 제거
+    let text = e.target.result;
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+    rawText = text;
+    showPreview(rawText);
   };
-  if (enc === 'euc-kr') {
-    reader.readAsText(file, 'EUC-KR');
-  } else {
-    reader.readAsText(file, 'UTF-8');
+  reader.onerror = () => showError('파일을 읽을 수 없습니다.');
+  reader.readAsText(file, enc === 'euc-kr' ? 'EUC-KR' : 'UTF-8');
+}
+
+// ══════════════════════════════════════════
+//  RFC 4180 준수 CSV 파서 (멀티라인 지원)
+// ══════════════════════════════════════════
+/**
+ * @param {string} text  - 원본 텍스트
+ * @param {string} delim - 구분자 ('\t' 또는 ',')
+ * @returns {string[][]} - 2차원 배열
+ */
+function parseCSV(text, delim) {
+  // 줄바꿈 정규화: \r\n → \n, 단독 \r → \n
+  text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuote = false;
+  let i = 0;
+
+  while (i < text.length) {
+    const ch = text[i];
+
+    if (inQuote) {
+      if (ch === '"') {
+        // 다음 문자도 " → 이스케이프된 따옴표 ("")
+        if (i + 1 < text.length && text[i + 1] === '"') {
+          field += '"';
+          i += 2;
+        } else {
+          // 따옴표 종료
+          inQuote = false;
+          i++;
+        }
+      } else {
+        // 따옴표 안의 줄바꿈도 그대로 필드에 포함
+        field += ch;
+        i++;
+      }
+    } else {
+      if (ch === '"') {
+        inQuote = true;
+        i++;
+      } else if (ch === delim) {
+        row.push(field);
+        field = '';
+        i++;
+      } else if (ch === '\n') {
+        row.push(field);
+        field = '';
+        rows.push(row);
+        row = [];
+        i++;
+      } else {
+        field += ch;
+        i++;
+      }
+    }
+  }
+
+  // 마지막 필드/행 처리
+  row.push(field);
+  if (row.some(c => c.trim())) rows.push(row);
+
+  return rows;
+}
+
+function detectDelim(text) {
+  const sel = document.querySelector('input[name=delim]:checked').value;
+  if (sel === 'tab') return '\t';
+  if (sel === 'comma') return ',';
+  // auto: 첫 줄에서 탭 수 vs 쉼표 수 비교
+  const first = text.split('\n')[0];
+  const tabs = (first.match(/\t/g) || []).length;
+  const commas = (first.match(/,/g) || []).length;
+  return tabs >= commas ? '\t' : ',';
+}
+
+// ══════════════════════════════════════════
+//  미리보기
+// ══════════════════════════════════════════
+function showPreview(text) {
+  try {
+    const delim = detectDelim(text);
+    const rows = parseCSV(text, delim);
+    if (rows.length < 2) { show('previewBox'); return; }
+
+    const headers = rows[0].map(h => h.trim());
+    // 완전히 빈 행 제거 (모든 셀이 공백인 행)
+    const dataRows = rows.slice(1).filter(r => r.some(c => (c||'').trim() !== ''));
+    const total = dataRows.length;
+
+    const mappedCount = headers.filter(h => FIELD_MAP[h]).length;
+    const unmappedCount = headers.length - mappedCount;
+
+    document.getElementById('previewGrid').innerHTML = `
+      <div class="preview-chip"><div class="label">총 행</div><div class="val">${total.toLocaleString()}</div><div class="sub">헤더 제외 · 빈 행 제거</div></div>
+      <div class="preview-chip"><div class="label">컬럼 수</div><div class="val">${headers.length}</div></div>
+      <div class="preview-chip"><div class="label">구분자</div><div class="val">${delim==='\t'?'TAB':','}</div></div>
+      <div class="preview-chip"><div class="label">매핑 컬럼</div><div class="val">${mappedCount}개</div>
+        <div class="sub">${unmappedCount > 0 ? '미사용 '+unmappedCount+'개 포함' : '전체 매핑됨'}</div></div>
+    `;
+
+    const tbody = document.getElementById('fieldTableBody');
+    tbody.innerHTML = '';
+    headers.forEach((h, hi) => {
+      const jsonKey = FIELD_MAP[h] || '(미사용)';
+      const filled = dataRows.filter(r => ((r[hi])||'').trim() !== '').length;
+      const pct = total > 0 ? Math.round(filled / total * 100) : 0;
+      const color = pct > 80 ? '#1D9E75' : pct > 30 ? '#185FA5' : '#888780';
+      const unusedStyle = !FIELD_MAP[h] ? 'opacity:.4' : '';
+      tbody.innerHTML += `<tr style="${unusedStyle}">
+        <td><code>${escHtml(h)}</code></td>
+        <td style="color:var(--muted)">${jsonKey}</td>
+        <td class="pct" style="color:${color}">${pct}%</td>
+        <td><div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${color}"></div></div></td>
+      </tr>`;
+    });
+
+    show('previewBox');
+  } catch(e) {
+    showError('미리보기 생성 중 오류: ' + e.message);
   }
 }
 
-// ── 미리보기 ──
-function showPreview(text, fname) {
-  const delim = detectDelim(text);
-  const rows = parseCSV(text, delim);
-  if (!rows.length) return;
-  const headers = rows[0];
-  const dataRows = rows.slice(1).filter(r => r.some(c => c.trim()));
-  const total = dataRows.length;
-
-  const FIELD_MAP = {
-    title:'t',form1:'f1',form2:'f2',form3:'f3',composer:'c',
-    arrangement:'ar',lyric:'ly',constructure:'cs',
-    perform_date:'d',perform_name:'n',perform_place:'p',perform_play:'pp',
-    note:'nt',commentary:'cm',add_note:'an',note_02:'n2'
-  };
-
-  // 통계 칩
-  document.getElementById('previewGrid').innerHTML = `
-    <div class="preview-chip"><div class="label">총 행</div><div class="val">${total.toLocaleString()}</div><div class="sub">헤더 제외</div></div>
-    <div class="preview-chip"><div class="label">컬럼 수</div><div class="val">${headers.length}</div></div>
-    <div class="preview-chip"><div class="label">구분자</div><div class="val">${delim==='\t'?'TAB':','}</div></div>
-    <div class="preview-chip"><div class="label">매핑 컬럼</div><div class="val">${headers.filter(h=>FIELD_MAP[h.trim()]).length}개</div></div>
-  `;
-
-  // 필드 테이블
-  const tbody = document.getElementById('fieldTableBody');
-  tbody.innerHTML = '';
-  headers.forEach((h, hi) => {
-    h = h.trim();
-    const jsonKey = FIELD_MAP[h] || '(미사용)';
-    const filled = dataRows.filter(r => (r[hi]||'').trim()).length;
-    const pct = total > 0 ? Math.round(filled/total*100) : 0;
-    const color = pct > 80 ? '#1D9E75' : pct > 30 ? '#185FA5' : '#888780';
-    tbody.innerHTML += `<tr>
-      <td><code>${h}</code></td>
-      <td style="color:var(--muted)">${jsonKey}</td>
-      <td class="pct" style="color:${color}">${pct}%</td>
-      <td><div class="pct-bar"><div class="pct-fill" style="width:${pct}%;background:${color}"></div></div></td>
-    </tr>`;
-  });
-
-  show('previewBox');
-}
-
-// ── 변환 ──
+// ══════════════════════════════════════════
+//  변환 메인
+// ══════════════════════════════════════════
 async function startConvert() {
   if (!rawText) return;
   hide('resultBox'); hide('errorBox');
@@ -299,64 +389,91 @@ async function startConvert() {
   document.getElementById('downloadBtn').style.display = 'none';
 
   try {
-    setProgress(10, '파일 파싱 중...');
+    setProgress(5, '구분자 감지 및 파싱 중...');
     await tick();
 
     const delim = detectDelim(rawText);
     const rows = parseCSV(rawText, delim);
-    if (rows.length < 2) throw new Error('데이터가 없습니다. 구분자 설정을 확인하세요.');
+
+    if (rows.length < 2) throw new Error('데이터가 없습니다. 구분자·인코딩 설정을 확인하세요.');
 
     const headers = rows[0].map(h => h.trim());
-    const dataRows = rows.slice(1).filter(r => r.some(c => c.trim()));
+    const dataRows = rows.slice(1).filter(r => r.some(c => (c||'').trim() !== ''));
 
-    setProgress(20, `${dataRows.length.toLocaleString()}개 행 처리 중...`);
+    // 헤더 매핑 검증
+    const mappedHeaders = headers.filter(h => FIELD_MAP[h]);
+    if (mappedHeaders.length === 0) {
+      throw new Error(`인식된 컬럼이 없습니다. 헤더를 확인하세요.\n감지된 헤더: ${headers.slice(0,5).join(', ')}`);
+    }
+
+    setProgress(15, `${dataRows.length.toLocaleString()}개 행 변환 중...`);
     await tick();
 
-    const FIELD_MAP = {
-      title:'t',form1:'f1',form2:'f2',form3:'f3',composer:'c',
-      arrangement:'ar',lyric:'ly',constructure:'cs',
-      perform_date:'d',perform_name:'n',perform_place:'p',perform_play:'pp',
-      note:'nt',commentary:'cm',add_note:'an',note_02:'n2'
-    };
-
-    // works 생성
+    const omitEmpty = document.querySelector('input[name=emptyField]:checked').value === 'omit';
     const works = [];
     const CHUNK = 500;
+    let skippedRows = 0;
+
     for (let i = 0; i < dataRows.length; i += CHUNK) {
       const chunk = dataRows.slice(i, i + CHUNK);
-      chunk.forEach(row => {
+
+      chunk.forEach((row, chunkIdx) => {
         const w = {};
+        let hasAnyValue = false;
+
         headers.forEach((h, hi) => {
           const key = FIELD_MAP[h];
-          if (key) w[key] = (row[hi] || '').trim();
+          if (!key) return; // 매핑 없는 컬럼 무시
+
+          // 셀 값 정규화: trim + 내부 연속 공백 정리
+          const raw = (row[hi] || '').trim();
+          const val = raw.replace(/[ \t]+/g, ' '); // 연속 탭/공백 → 단일 공백
+
+          if (val !== '') {
+            w[key] = val;
+            hasAnyValue = true;
+          } else if (!omitEmpty) {
+            w[key] = '';
+          }
         });
-        // 필수 필드 기본값
-        Object.values(FIELD_MAP).forEach(k => { if (!(k in w)) w[k] = ''; });
+
+        // 완전히 비어있는 행은 건너뜀
+        if (!hasAnyValue) { skippedRows++; return; }
+
+        // 빈 필드 유지 모드일 때: 누락된 키도 빈 문자열로 채움
+        if (!omitEmpty) {
+          Object.values(FIELD_MAP).forEach(k => { if (!(k in w)) w[k] = ''; });
+        }
+
         works.push(w);
       });
-      const pct = 20 + Math.round((i / dataRows.length) * 50);
-      setProgress(pct, `${Math.min(i+CHUNK, dataRows.length).toLocaleString()} / ${dataRows.length.toLocaleString()} 처리 중...`);
+
+      const pct = 15 + Math.round((Math.min(i + CHUNK, dataRows.length) / dataRows.length) * 55);
+      setProgress(pct, `${Math.min(i + CHUNK, dataRows.length).toLocaleString()} / ${dataRows.length.toLocaleString()} 처리 중...`,
+        skippedRows > 0 ? `빈 행 ${skippedRows}개 건너뜀` : '');
       await tick();
     }
 
+    if (works.length === 0) throw new Error('변환된 작품이 없습니다. 파일 내용과 구분자를 확인하세요.');
+
     setProgress(72, '통계 계산 중...');
     await tick();
-
     const stats = calcStats(works);
 
     setProgress(90, 'JSON 직렬화 중...');
     await tick();
 
-    resultJSON = JSON.stringify({works, stats}, null, null);
+    // 최소화된 JSON 출력 (공백 없음)
+    resultJSON = JSON.stringify({ works, stats });
 
     setProgress(100, '완료!');
     await tick();
 
-    // 결과 표시
     hide('progressWrap');
-    showResultStats(works, stats, resultJSON.length);
+    showResultStats(works, stats, resultJSON.length, skippedRows);
     show('resultBox');
     document.getElementById('downloadBtn').style.display = 'inline-block';
+
   } catch(e) {
     hide('progressWrap');
     showError(e.message);
@@ -365,137 +482,117 @@ async function startConvert() {
   }
 }
 
-// ── 통계 계산 ──
+// ══════════════════════════════════════════
+//  통계 계산
+// ══════════════════════════════════════════
 function calcStats(works) {
-  const counter = obj => {
-    const c = {};
-    obj.forEach(v => { if(v) c[v] = (c[v]||0)+1; });
-    return c;
-  };
-
   const genres = {}, forms = {}, yearC = {}, monthC = {};
-  const hm = {}, instrC = {};
+  const hm = {}, instrC = {}, composerC = {};
   const INSTR = ['가야금','대금','거문고','해금','피리','아쟁','장구','소금','양금','생황','타악','첼로','피아노','기타','바이올린'];
-  const composerC = {};
 
   works.forEach(w => {
-    if (w.f1 && w.f1.length < 20) genres[w.f1] = (genres[w.f1]||0)+1;
-    if (w.f2) forms[w.f2] = (forms[w.f2]||0)+1;
-    if (w.c && !['민요','전래','작자미상'].includes(w.c)) composerC[w.c] = (composerC[w.c]||0)+1;
-    INSTR.forEach(ins => { if ((w.pp||'').includes(ins)) instrC[ins] = (instrC[ins]||0)+1; });
+    const f1 = (w.f1||'').trim();
+    const f2 = (w.f2||'').trim();
+    const c  = (w.c ||'').trim();
+    const d  = (w.d ||'').trim();
+    const pp = (w.pp||'').trim();
 
-    const ym = w.d.match(/(1[89]\d{2}|20[012]\d)/);
-    if (ym) {
-      const y = ym[1];
-      yearC[y] = (yearC[y]||0)+1;
-      const mo = w.d.match(/(1[89]\d{2}|20[012]\d)[.\-\/](\d{1,2})/);
-      if (mo) {
-        const m = parseInt(mo[2]);
+    if (f1 && f1.length < 20) genres[f1] = (genres[f1]||0) + 1;
+    if (f2) forms[f2] = (forms[f2]||0) + 1;
+    if (c && !['민요','전래','작자미상',''].includes(c)) composerC[c] = (composerC[c]||0) + 1;
+    INSTR.forEach(ins => { if (pp.includes(ins)) instrC[ins] = (instrC[ins]||0) + 1; });
+
+    const ymMatch = d.match(/(1[89]\d{2}|20[012]\d)/);
+    if (ymMatch) {
+      const y = ymMatch[1];
+      yearC[y] = (yearC[y]||0) + 1;
+      const moMatch = d.match(/(1[89]\d{2}|20[012]\d)[.\-\/](\d{1,2})/);
+      if (moMatch) {
+        const m = parseInt(moMatch[2]);
         if (m >= 1 && m <= 12) {
-          monthC[m] = (monthC[m]||0)+1;
+          monthC[m] = (monthC[m]||0) + 1;
           if (!hm[y]) hm[y] = {};
-          hm[y][m] = (hm[y][m]||0)+1;
+          hm[y][m] = (hm[y][m]||0) + 1;
         }
       }
     }
   });
 
-  // 연도 히트맵 범위
   const hmFull = {};
-  Object.keys(hm).filter(y => parseInt(y) >= 1970).sort().forEach(y => {
-    hmFull[y] = {};
-    for (let m = 1; m <= 12; m++) hmFull[y][m] = hm[y][m] || 0;
-  });
-
-  const sortedComposers = Object.entries(composerC).sort((a,b)=>b[1]-a[1]).slice(0,20);
-  const sortedForms = Object.fromEntries(Object.entries(forms).sort((a,b)=>b[1]-a[1]).slice(0,12));
-  const sortedYear = Object.fromEntries(Object.entries(yearC).filter(([y])=>parseInt(y)>=1950).sort((a,b)=>a[0].localeCompare(b[0])));
-  const sortedMonth = Object.fromEntries(Object.entries(monthC).sort((a,b)=>parseInt(a[0])-parseInt(b[0])));
-  const sortedInstr = Object.fromEntries(Object.entries(instrC).sort((a,b)=>b[1]-a[1]));
+  Object.keys(hm)
+    .filter(y => parseInt(y) >= 1970)
+    .sort()
+    .forEach(y => {
+      hmFull[y] = {};
+      for (let m = 1; m <= 12; m++) hmFull[y][m] = hm[y][m] || 0;
+    });
 
   return {
     total: works.length,
     genres: Object.fromEntries(Object.entries(genres).sort((a,b)=>b[1]-a[1]).slice(0,6)),
-    forms: sortedForms,
-    composers_top: sortedComposers,
-    year_counts: sortedYear,
-    month_counts: sortedMonth,
-    heatmap: hmFull,
-    instr: sortedInstr,
+    forms:  Object.fromEntries(Object.entries(forms).sort((a,b)=>b[1]-a[1]).slice(0,12)),
+    composers_top: Object.entries(composerC).sort((a,b)=>b[1]-a[1]).slice(0,20),
+    year_counts:   Object.fromEntries(Object.entries(yearC).filter(([y])=>parseInt(y)>=1950).sort((a,b)=>a[0].localeCompare(b[0]))),
+    month_counts:  Object.fromEntries(Object.entries(monthC).sort((a,b)=>parseInt(a[0])-parseInt(b[0]))),
+    heatmap:       hmFull,
+    instr:         Object.fromEntries(Object.entries(instrC).sort((a,b)=>b[1]-a[1])),
   };
 }
 
-// ── 다운로드 ──
+// ══════════════════════════════════════════
+//  결과 표시 / 다운로드
+// ══════════════════════════════════════════
+function showResultStats(works, stats, byteLen, skippedRows) {
+  const hasCm = works.filter(w => w.cm).length;
+  const hasNt = works.filter(w => w.nt).length;
+  const hasN2 = works.filter(w => w.n2).length;
+  const skippedNote = skippedRows > 0
+    ? `<div style="grid-column:1/-1;font-size:11px;color:var(--teal-text);opacity:.7;margin-top:2px">※ 완전히 빈 행 ${skippedRows}개는 제외되었습니다.</div>`
+    : '';
+  document.getElementById('resultStats').innerHTML = `
+    <div class="result-stat"><div class="label">작품 수</div><div class="val">${works.length.toLocaleString()}</div></div>
+    <div class="result-stat"><div class="label">파일 크기</div><div class="val">${(byteLen/1024).toFixed(1)} KB</div></div>
+    <div class="result-stat"><div class="label">작품해설</div><div class="val">${hasCm.toLocaleString()}개</div></div>
+    <div class="result-stat"><div class="label">비고</div><div class="val">${hasNt.toLocaleString()}개</div></div>
+    <div class="result-stat"><div class="label">보충해설(note_02)</div><div class="val">${hasN2.toLocaleString()}개</div></div>
+    <div class="result-stat"><div class="label">작곡가 수</div><div class="val">${new Set(works.map(w=>w.c).filter(Boolean)).size.toLocaleString()}</div></div>
+    ${skippedNote}
+  `;
+}
+
 function downloadJSON() {
   if (!resultJSON) return;
-  const blob = new Blob([resultJSON], {type:'application/json'});
+  const blob = new Blob([resultJSON], { type: 'application/json;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url; a.download = 'kugak.json'; a.click();
   URL.revokeObjectURL(url);
 }
 
-// ── 결과 통계 ──
-function showResultStats(works, stats, byteLen) {
-  const hasCm = works.filter(w=>w.cm).length;
-  const hasNt = works.filter(w=>w.nt).length;
-  const hasN2 = works.filter(w=>w.n2).length;
-  document.getElementById('resultStats').innerHTML = `
-    <div class="result-stat"><div class="label">작품 수</div><div class="val">${works.length.toLocaleString()}</div></div>
-    <div class="result-stat"><div class="label">파일 크기</div><div class="val">${(byteLen/1024).toFixed(0)} KB</div></div>
-    <div class="result-stat"><div class="label">작품해설</div><div class="val">${hasCm.toLocaleString()}개</div></div>
-    <div class="result-stat"><div class="label">비고</div><div class="val">${hasNt.toLocaleString()}개</div></div>
-    <div class="result-stat"><div class="label">보충해설(note_02)</div><div class="val">${hasN2.toLocaleString()}개</div></div>
-    <div class="result-stat"><div class="label">작곡가 수</div><div class="val">${new Set(works.map(w=>w.c).filter(Boolean)).size.toLocaleString()}</div></div>
-  `;
-}
-
-// ── CSV 파서 ──
-function parseCSV(text, delim) {
-  const lines = text.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n');
-  return lines.map(line => {
-    if (delim === ',') return parseCSVLine(line);
-    return line.split(delim);
-  });
-}
-
-function parseCSVLine(line) {
-  const result = [];
-  let cur = '', inQ = false;
-  for (let i = 0; i < line.length; i++) {
-    const c = line[i];
-    if (c === '"') { inQ = !inQ; }
-    else if (c === ',' && !inQ) { result.push(cur); cur = ''; }
-    else { cur += c; }
-  }
-  result.push(cur);
-  return result;
-}
-
-function detectDelim(text) {
-  const sel = document.querySelector('input[name=delim]:checked').value;
-  if (sel === 'tab') return '\t';
-  if (sel === 'comma') return ',';
-  // auto
-  const first = text.split('\n')[0];
-  return first.includes('\t') ? '\t' : ',';
-}
-
-// ── 유틸 ──
-function setProgress(pct, label, sub='') {
+// ══════════════════════════════════════════
+//  유틸리티
+// ══════════════════════════════════════════
+function setProgress(pct, label, sub = '') {
   document.getElementById('progressFill').style.width = pct + '%';
   document.getElementById('progressLabel').textContent = label;
   document.getElementById('progressText').textContent = sub;
 }
 function show(id) { document.getElementById(id).style.display = 'block'; }
 function hide(id) { document.getElementById(id).style.display = 'none'; }
-function showError(msg) { const el=document.getElementById('errorBox'); el.textContent='오류: '+msg; el.style.display='block'; }
+function showError(msg) {
+  const el = document.getElementById('errorBox');
+  el.style.display = 'block';
+  el.innerHTML = '⚠️ <strong>오류:</strong> ' + escHtml(msg).replace(/\n/g,'<br>');
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
 function tick() { return new Promise(r => setTimeout(r, 0)); }
 
 function reset() {
-  rawText = ''; resultJSON = null;
+  rawText = ''; resultJSON = null; currentFile = null;
   document.getElementById('fileName').textContent = '';
-  dropZone.classList.remove('has-file','drag');
+  dropZone.classList.remove('has-file', 'drag');
   fileInput.value = '';
   document.getElementById('convertBtn').disabled = true;
   document.getElementById('downloadBtn').style.display = 'none';

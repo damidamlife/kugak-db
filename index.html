@@ -289,7 +289,7 @@ tr:hover td{background:var(--gray)}
       </div>
 
       <div class="d-sec">
-        <div class="d-sec-title">초연 정보</div>
+        <div class="d-sec-title" id="dPerformSec">초연 정보</div>
         <div class="d-grid">
           <div class="d-row" id="dDRow"><span class="d-lbl">공연일</span><span class="d-val" id="dD"></span></div>
           <div class="d-row" id="dPRow"><span class="d-lbl">공연 장소</span><span class="d-val" id="dP"></span></div>
@@ -487,7 +487,8 @@ function openDetail(idx){
   ['dDRow', 'dPRow', 'dNRow', 'dPpRow'].forEach(id=>{
     const row=document.getElementById(id);
     if(row) row.style.display=row.querySelector('.d-val').textContent==='—'?'none':'flex';
-  });  
+  });
+	document.getElementById('dPerformSec').style.display=(w.d||w.p||w.n||w.pp)?'block':'none';  
   ds('dNtSec','dNt',w.nt);ds('dCmSec','dCm',w.cm);ds('dAnSec','dAn',w.an);ds('dN2Sec','dN2',w.n2);
   document.getElementById('overlay').classList.add('open');
   document.body.style.overflow='hidden';

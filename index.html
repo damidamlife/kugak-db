@@ -479,11 +479,15 @@ function openDetail(idx){
   if(w.f3)bdg+=`<span class="badge b-etc">${esc(w.f3)}</span>`;
   document.getElementById('dBadges').innerHTML=bdg;
   dv('dC',w.c);dv('dAr',w.ar);dv('dLy',w.ly);dv('dCs',w.cs);
-  ['dCRow','dArRow','dLyRow','dCsRow', 'dDRow', 'dPRow', 'dNRow', 'dPpRow'].forEach(id=>{
+  ['dCRow','dArRow','dLyRow','dCsRow'].forEach(id=>{
     const row=document.getElementById(id);
     if(row) row.style.display=row.querySelector('.d-val').textContent==='—'?'none':'flex';
   });
   dv('dD',w.d);dv('dP',w.p);dv('dN',w.n);dv('dPp',w.pp);
+  ['dDRow', 'dPRow', 'dNRow', 'dPpRow'].forEach(id=>{
+    const row=document.getElementById(id);
+    if(row) row.style.display=row.querySelector('.d-val').textContent==='—'?'none':'flex';
+  });  
   ds('dNtSec','dNt',w.nt);ds('dCmSec','dCm',w.cm);ds('dAnSec','dAn',w.an);ds('dN2Sec','dN2',w.n2);
   document.getElementById('overlay').classList.add('open');
   document.body.style.overflow='hidden';

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>한국음악 창작곡 작품 목록</title>
+<title>한국 창작국악 작품 데이터베이스</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -162,8 +162,8 @@ tr:hover td{background:var(--gray)}
 
 <div class="header">
   <div>
-    <h1>한국음악 창작곡 작품 데이터베이스</h1>
-    <p>1940–2020년 · 한국음악 창작곡 작품 아카이브</p>
+    <h1>한국 창작국악 작품 데이터베이스</h1>
+    <p>1940–2018년 · 국악 창작 작품 아카이브</p>
   </div>
   <span class="header-badge" id="totalBadge">로딩 중...</span>
 </div>
@@ -281,18 +281,15 @@ tr:hover td{background:var(--gray)}
       <div class="d-sec">
         <div class="d-sec-title">작품 정보</div>
         <div class="d-grid">
-          <div class="d-row"><span class="d-lbl">장르</span><span class="d-val" id="dF1"></span></div>
-          <div class="d-row"><span class="d-lbl">형식</span><span class="d-val" id="dF2"></span></div>
-          <div class="d-row"><span class="d-lbl">악기·분류</span><span class="d-val" id="dF3"></span></div>
-          <div class="d-row"><span class="d-lbl">작곡</span><span class="d-val" id="dC"></span></div>
-          <div class="d-row"><span class="d-lbl">편곡</span><span class="d-val" id="dAr"></span></div>
-          <div class="d-row"><span class="d-lbl">작사</span><span class="d-val" id="dLy"></span></div>
-          <div class="d-row full"><span class="d-lbl">구성</span><span class="d-val" id="dCs"></span></div>
+          <div class="d-row" id="dCRow"><span class="d-lbl">작곡</span><span class="d-val" id="dC"></span></div>
+          <div class="d-row" id="dArRow"><span class="d-lbl">편곡</span><span class="d-val" id="dAr"></span></div>
+          <div class="d-row" id="dLyRow"><span class="d-lbl">작사</span><span class="d-val" id="dLy"></span></div>
+          <div class="d-row" id="dCsRow"><span class="d-lbl">구성</span><span class="d-val" id="dCs"></span></div>
         </div>
       </div>
 
       <div class="d-sec">
-        <div class="d-sec-title">초연 공연 정보</div>
+        <div class="d-sec-title">초연 정보</div>
         <div class="d-grid">
           <div class="d-row"><span class="d-lbl">공연일</span><span class="d-val" id="dD"></span></div>
           <div class="d-row"><span class="d-lbl">공연 장소</span><span class="d-val" id="dP"></span></div>
@@ -481,8 +478,11 @@ function openDetail(idx){
   if(w.f2)bdg+=`<span class="badge b-etc">${esc(w.f2)}</span>`;
   if(w.f3)bdg+=`<span class="badge b-etc">${esc(w.f3)}</span>`;
   document.getElementById('dBadges').innerHTML=bdg;
-  dv('dF1',w.f1);dv('dF2',w.f2);dv('dF3',w.f3);
   dv('dC',w.c);dv('dAr',w.ar);dv('dLy',w.ly);dv('dCs',w.cs);
+  ['dCRow','dArRow','dLyRow','dCsRow'].forEach(id=>{
+    const row=document.getElementById(id);
+    if(row) row.style.display=row.querySelector('.d-val').textContent==='—'?'none':'flex';
+  });
   dv('dD',w.d);dv('dP',w.p);dv('dN',w.n);dv('dPp',w.pp);
   ds('dNtSec','dNt',w.nt);ds('dCmSec','dCm',w.cm);ds('dAnSec','dAn',w.an);ds('dN2Sec','dN2',w.n2);
   document.getElementById('overlay').classList.add('open');

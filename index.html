@@ -291,10 +291,10 @@ tr:hover td{background:var(--gray)}
       <div class="d-sec">
         <div class="d-sec-title">초연 정보</div>
         <div class="d-grid">
-          <div class="d-row"><span class="d-lbl">공연일</span><span class="d-val" id="dD"></span></div>
-          <div class="d-row"><span class="d-lbl">공연 장소</span><span class="d-val" id="dP"></span></div>
-          <div class="d-row full"><span class="d-lbl">공연명</span><span class="d-val" id="dN"></span></div>
-          <div class="d-row full"><span class="d-lbl">연주자</span><span class="d-val" id="dPp"></span></div>
+          <div class="d-row" id="dDRow"><span class="d-lbl">공연일</span><span class="d-val" id="dD"></span></div>
+          <div class="d-row" id="dPRow"><span class="d-lbl">공연 장소</span><span class="d-val" id="dP"></span></div>
+          <div class="d-row full" id="dNRow"><span class="d-lbl">공연명</span><span class="d-val" id="dN"></span></div>
+          <div class="d-row full" id="dPpRow"><span class="d-lbl">연주자</span><span class="d-val" id="dPp"></span></div>
         </div>
       </div>
 
@@ -479,7 +479,7 @@ function openDetail(idx){
   if(w.f3)bdg+=`<span class="badge b-etc">${esc(w.f3)}</span>`;
   document.getElementById('dBadges').innerHTML=bdg;
   dv('dC',w.c);dv('dAr',w.ar);dv('dLy',w.ly);dv('dCs',w.cs);
-  ['dCRow','dArRow','dLyRow','dCsRow'].forEach(id=>{
+  ['dCRow','dArRow','dLyRow','dCsRow', 'dDRow', 'dPRow', 'dNRow', 'dPpRow'].forEach(id=>{
     const row=document.getElementById(id);
     if(row) row.style.display=row.querySelector('.d-val').textContent==='—'?'none':'flex';
   });

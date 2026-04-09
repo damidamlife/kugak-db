@@ -3,18 +3,26 @@ name: Airtable to JSON
 on:
   schedule:
     - cron: '0 15 * * *'   # 매일 자정(KST) 실행 = UTC 15:00
-  workflow_dispatch:         # GitHub에서 수동 실행 버튼
+  workflow_dispatch:       # GitHub에서 수동 실행 버튼
+
+# 봇이 레포지토리에 커밋/푸시를 할 수 있도록 쓰기 권한 부여
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
-  env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true  # ← 추가
+    
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     
     steps:
+      # 기존에 중복되었던 체크아웃 옵션을 하나로 통합
       - name: 저장소 체크아웃
         uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0  # 전체 히스토리 가져오기 (선택)
 
       - name: Python 설치
         uses: actions/setup-python@v5
@@ -37,9 +45,3 @@ jobs:
           git add kugak.json
           git diff --cached --quiet || git commit -m "kugak.json 자동 업데이트 ($(date '+%Y-%m-%d %H:%M KST'))"
           git push
-          
-    - name: 저장소 체크아웃
-      uses: actions/checkout@v4
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        fetch-depth: 0  # 전체 히스토리 가져오기 (선택)

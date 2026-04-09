@@ -37,3 +37,9 @@ jobs:
           git add kugak.json
           git diff --cached --quiet || git commit -m "kugak.json 자동 업데이트 ($(date '+%Y-%m-%d %H:%M KST'))"
           git push
+          
+    - name: 저장소 체크아웃
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        fetch-depth: 0  # 전체 히스토리 가져오기 (선택)

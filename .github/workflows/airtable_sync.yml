@@ -6,7 +6,7 @@ on:
   workflow_dispatch:         # GitHub에서 수동 실행 버튼
 
 jobs:
-  build:
+  sync:
     runs-on: ubuntu-latest
     steps:
       - name: 저장소 체크아웃
@@ -15,7 +15,7 @@ jobs:
       - name: Python 설치
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
 
       - name: 패키지 설치
         run: pip install requests

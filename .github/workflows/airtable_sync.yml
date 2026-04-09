@@ -8,6 +8,10 @@ on:
 jobs:
   sync:
     runs-on: ubuntu-latest
+
+  env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true  # ← 추가
+    
     steps:
       - name: 저장소 체크아웃
         uses: actions/checkout@v4

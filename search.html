@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>국악 DB · 상세 검색</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--border:#e5e4df;--border2:#d3d1c7;
+  --text:#1a1a18;--muted:#888780;--hint:#b4b2a9;
+  --blue:#185FA5;--blue-light:#e6f1fb;--blue-text:#0C447C;
+  --teal:#1D9E75;--teal-light:#e1f5ee;--teal-text:#085041;
+  --red:#A32D2D;--red-light:#fcebeb;
+  --gray:#f1efe8;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;
+  background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh}
+
+/* 헤더 */
+.header{background:var(--surface);border-bottom:1px solid var(--border);padding:16px 32px;
+  display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:17px;font-weight:600}
+.header a{font-size:13px;color:var(--blue);text-decoration:none}
+
+.main{max-width:960px;margin:32px auto;padding:0 24px 60px}
+
+/* 검색 폼 */
+.search-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px}
+.search-card h2{font-size:14px;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.05em;margin-bottom:16px}
+.search-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+.field label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.field input,.field select{
+  padding:9px 12px;border:1px solid var(--border2);border-radius:7px;
+  font-size:14px;font-family:inherit;background:var(--surface);color:var(--text)
+}
+.field input:focus,.field select:focus{
+  outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(24,95,165,.1)
+}
+.btn-row{display:flex;gap:10px;margin-top:18px}
+.btn{padding:10px 24px;border-radius:8px;font-size:14px;cursor:pointer;
+  border:1px solid var(--border2);background:var(--surface);color:var(--text);font-family:inherit}
+.btn:hover{background:var(--gray)}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:var(--blue-text)}
+
+/* 결과 요약 */
+.result-summary{font-size:13px;color:var(--muted);margin-bottom:12px;padding:0 2px}
+.result-summary strong{color:var(--text)}
+
+/* 결과 테이블 */
+.table-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--border);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--gray);padding:10px 14px;text-align:left;
+  font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.04em;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody tr{border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--blue-light)}
+tbody td{padding:10px 14px;vertical-align:top}
+.td-title{font-weight:500;color:var(--text);max-width:220px}
+.td-muted{color:var(--muted)}
+.badge{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;
+  font-weight:500;background:var(--gray);color:var(--muted);margin-right:3px}
+
+/* 페이지네이션 */
+.pagination{display:flex;align-items:center;justify-content:center;gap:8px;margin-top:20px}
+.page-btn{padding:7px 14px;border:1px solid var(--border2);border-radius:7px;
+  background:var(--surface);font-size:13px;cursor:pointer;color:var(--text)}
+.page-btn:hover{background:var(--gray)}
+.page-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.page-btn:disabled{opacity:.35;cursor:default}
+.page-info{font-size:13px;color:var(--muted)}
+
+/* 로딩 / 빈 결과 */
+.state-box{text-align:center;padding:60px 20px;color:var(--muted)}
+.state-box .icon{font-size:36px;margin-bottom:12px}
+.state-box p{font-size:14px}
+
+/* 오버레이 */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:100;overflow-y:auto;padding:40px 20px}
+.overlay.open{display:flex;align-items:flex-start;justify-content:center}
+.detail-card{background:var(--surface);border-radius:14px;width:100%;max-width:640px;
+  padding:28px;position:relative}
+.detail-close{position:absolute;top:16px;right:16px;background:var(--gray);
+  border:none;border-radius:50%;width:32px;height:32px;cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center}
+.detail-close:hover{background:var(--border2)}
+.d-title{font-size:20px;font-weight:700;margin-bottom:10px;padding-right:40px}
+.d-badges{margin-bottom:18px;display:flex;flex-wrap:wrap;gap:5px}
+.d-sec{margin-bottom:18px}
+.d-sec-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.05em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)}
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.d-row{display:flex;flex-direction:column;gap:2px}
+.d-row.full{grid-column:1/-1}
+.d-lbl{font-size:10px;font-weight:600;color:var(--hint);text-transform:uppercase;letter-spacing:.04em}
+.d-val{font-size:14px;color:var(--text)}
+.d-text{font-size:13px;color:var(--text);line-height:1.7;
+  background:var(--gray);border-radius:8px;padding:12px 14px;margin-top:6px}
+
+@media(max-width:600px){
+  .search-grid{grid-template-columns:1fr}
+  .d-grid{grid-template-columns:1fr}
+  .header{padding:14px 16px}
+  .main{padding:0 14px 40px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🎵 국악 DB · 상세 검색</h1>
+  <a href="index.html">← 메인으로</a>
+</div>
+
+<div class="main">
+
+  <!-- 검색 폼 -->
+  <div class="search-card">
+    <h2>검색 조건</h2>
+    <div class="search-grid">
+
+      <div class="field full">
+        <label>통합 검색</label>
+        <input type="text" id="q" placeholder="작품명, 작곡가, 연주자, 공연명 등 자유 검색">
+      </div>
+
+      <div class="field">
+        <label>작품명</label>
+        <input type="text" id="fTitle" placeholder="예: 산조, 협주곡">
+      </div>
+
+      <div class="field">
+        <label>작곡가</label>
+        <input type="text" id="fComposer" placeholder="예: 박범훈">
+      </div>
+
+      <div class="field">
+        <label>장르 (form1)</label>
+        <select id="fForm1"><option value="">전체</option></select>
+      </div>
+
+      <div class="field">
+        <label>연주 형식 (form2)</label>
+        <select id="fForm2"><option value="">전체</option></select>
+      </div>
+
+      <div class="field">
+        <label>악기·분류 (form3)</label>
+        <select id="fForm3"><option value="">전체</option></select>
+      </div>
+
+      <div class="field">
+        <label>연주자</label>
+        <input type="text" id="fPlayer" placeholder="예: 가야금">
+      </div>
+
+      <div class="field">
+        <label>공연 시작년도</label>
+        <input type="number" id="fYearFrom" placeholder="예: 2000" min="1900" max="2100">
+      </div>
+
+      <div class="field">
+        <label>공연 종료년도</label>
+        <input type="number" id="fYearTo" placeholder="예: 2024" min="1900" max="2100">
+      </div>
+
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="doSearch()">🔍 검색</button>
+      <button class="btn" onclick="resetForm()">초기화</button>
+    </div>
+  </div>
+
+  <!-- 결과 요약 -->
+  <div class="result-summary" id="resultSummary" style="display:none"></div>
+
+  <!-- 결과 테이블 -->
+  <div id="resultArea">
+    <div class="state-box">
+      <div class="icon">🎼</div>
+      <p>검색 조건을 입력하고 검색 버튼을 눌러주세요</p>
+    </div>
+  </div>
+
+  <!-- 페이지네이션 -->
+  <div class="pagination" id="pagination" style="display:none"></div>
+
+</div>
+
+<!-- 상세 오버레이 -->
+<div class="overlay" id="overlay" onclick="handleOverlayBg(event)">
+  <div class="detail-card">
+    <button class="detail-close" onclick="closeDetail()">✕</button>
+    <div class="d-title" id="dTitle"></div>
+    <div class="d-badges" id="dBadges"></div>
+
+    <div class="d-sec">
+      <div class="d-sec-title">작품 정보</div>
+      <div class="d-grid">
+        <div class="d-row"><span class="d-lbl">장르</span><span class="d-val" id="dF1"></span></div>
+        <div class="d-row"><span class="d-lbl">형식</span><span class="d-val" id="dF2"></span></div>
+        <div class="d-row"><span class="d-lbl">악기·분류</span><span class="d-val" id="dF3"></span></div>
+        <div class="d-row"><span class="d-lbl">작곡</span><span class="d-val" id="dC"></span></div>
+        <div class="d-row optional" id="rowAr"><span class="d-lbl">편곡</span><span class="d-val" id="dAr"></span></div>
+        <div class="d-row optional" id="rowLy"><span class="d-lbl">작사</span><span class="d-val" id="dLy"></span></div>
+        <div class="d-row full optional" id="rowCs"><span class="d-lbl">구성</span><span class="d-val" id="dCs"></span></div>
+      </div>
+    </div>
+
+    <div class="d-sec">
+      <div class="d-sec-title">공연 정보</div>
+      <div class="d-grid">
+        <div class="d-row"><span class="d-lbl">공연일</span><span class="d-val" id="dDate"></span></div>
+        <div class="d-row"><span class="d-lbl">장소</span><span class="d-val" id="dPlace"></span></div>
+        <div class="d-row full"><span class="d-lbl">공연명</span><span class="d-val" id="dName"></span></div>
+        <div class="d-row full"><span class="d-lbl">연주자</span><span class="d-val" id="dPlay"></span></div>
+      </div>
+    </div>
+
+    <div class="d-sec" id="secNote" style="display:none">
+      <div class="d-sec-title">비고</div>
+      <div class="d-text" id="dNote"></div>
+    </div>
+
+    <div class="d-sec" id="secCm" style="display:none">
+      <div class="d-sec-title">작품 해설</div>
+      <div class="d-text" id="dCm"></div>
+    </div>
+
+    <div class="d-sec" id="secAn" style="display:none">
+      <div class="d-sec-title">추가 정보</div>
+      <div class="d-text" id="dAn"></div>
+    </div>
+
+    <div class="d-sec" id="secN2" style="display:none">
+      <div class="d-sec-title">보충 해설</div>
+      <div class="d-text" id="dN2"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── 설정 ──────────────────────────────────
+const JSON_URL = 'kugak.json';   // JSON 파일 경로 (같은 저장소)
+const PAGE_SIZE = 30;            // 한 페이지 표시 수
+
+// ── 상태 ──────────────────────────────────
+let allWorks = [];
+let filtered  = [];
+let currentPage = 1;
+
+// ── 초기 로드 ─────────────────────────────
+(async () => {
+  try {
+    const res = await fetch(JSON_URL);
+    if (!res.ok) throw new Error('kugak.json 로드 실패');
+    const data = await res.json();
+    allWorks = data.works || [];
+    buildFilters();
+  } catch(e) {
+    document.getElementById('resultArea').innerHTML =
+      `<div class="state-box"><div class="icon">⚠️</div><p>${e.message}</p></div>`;
+  }
+})();
+
+// ── 필터 옵션 자동 생성 ───────────────────
+function buildFilters() {
+  const uniq = (key) => [...new Set(allWorks.map(w => w[key]).filter(Boolean))].sort();
+
+  ['fForm1','fForm2','fForm3'].forEach((id, i) => {
+    const key = ['f1','f2','f3'][i];
+    const sel = document.getElementById(id);
+    uniq(key).forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+// ── 검색 실행 ─────────────────────────────
+function doSearch() {
+  const q        = document.getElementById('q').value.trim().toLowerCase();
+  const title    = document.getElementById('fTitle').value.trim().toLowerCase();
+  const composer = document.getElementById('fComposer').value.trim().toLowerCase();
+  const form1    = document.getElementById('fForm1').value;
+  const form2    = document.getElementById('fForm2').value;
+  const form3    = document.getElementById('fForm3').value;
+  const player   = document.getElementById('fPlayer').value.trim().toLowerCase();
+  const yearFrom = parseInt(document.getElementById('fYearFrom').value) || 0;
+  const yearTo   = parseInt(document.getElementById('fYearTo').value) || 9999;
+
+  filtered = allWorks.filter(w => {
+    // 통합 검색: 주요 필드 전체에서 검색
+    if (q) {
+      const hay = [w.t, w.c, w.pp, w.n, w.f1, w.f2, w.cm, w.nt]
+        .map(v => (v||'').toLowerCase()).join(' ');
+      if (!hay.includes(q)) return false;
+    }
+
+    if (title    && !(w.t  ||'').toLowerCase().includes(title))    return false;
+    if (composer && !(w.c  ||'').toLowerCase().includes(composer))  return false;
+    if (form1    && w.f1 !== form1)                                  return false;
+    if (form2    && w.f2 !== form2)                                  return false;
+    if (form3    && w.f3 !== form3)                                  return false;
+    if (player   && !(w.pp ||'').toLowerCase().includes(player))    return false;
+
+    // 연도 범위
+    if (yearFrom > 0 || yearTo < 9999) {
+      const ym = (w.d||'').match(/\d{4}/);
+      const year = ym ? parseInt(ym[0]) : 0;
+      if (year < yearFrom || year > yearTo) return false;
+    }
+
+    return true;
+  });
+
+  currentPage = 1;
+  renderResults();
+}
+
+// ── 결과 렌더링 ───────────────────────────
+function renderResults() {
+  const total = filtered.length;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const pageData = filtered.slice(start, start + PAGE_SIZE);
+
+  // 요약
+  const sumEl = document.getElementById('resultSummary');
+  sumEl.style.display = 'block';
+  sumEl.innerHTML = `전체 <strong>${total.toLocaleString()}</strong>건 중 
+    <strong>${start+1}–${Math.min(start+PAGE_SIZE, total)}</strong>번째 표시`;
+
+  // 빈 결과
+  if (total === 0) {
+    document.getElementById('resultArea').innerHTML =
+      `<div class="state-box"><div class="icon">🔍</div><p>검색 결과가 없습니다</p></div>`;
+    document.getElementById('pagination').style.display = 'none';
+    return;
+  }
+
+  // 테이블
+  let html = `<div class="table-wrap"><table>
+    <thead><tr>
+      <th>작품명</th><th>장르</th><th>형식</th>
+      <th>작곡가</th><th>연주자</th><th>공연일</th><th>공연명</th>
+    </tr></thead><tbody>`;
+
+  pageData.forEach((w, i) => {
+    const idx = start + i;
+    html += `<tr onclick="openDetail(${idx})">
+      <td class="td-title">${esc(w.t||'')}</td>
+      <td class="td-muted">${esc(w.f1||'')}</td>
+      <td class="td-muted">${esc(w.f2||'')}</td>
+      <td>${esc(w.c||'')}</td>
+      <td class="td-muted">${esc((w.pp||'').substring(0,30))}${(w.pp||'').length>30?'…':''}</td>
+      <td class="td-muted" style="white-space:nowrap">${esc(w.d||'')}</td>
+      <td class="td-muted">${esc((w.n||'').substring(0,24))}${(w.n||'').length>24?'…':''}</td>
+    </tr>`;
+  });
+
+  html += '</tbody></table></div>';
+  document.getElementById('resultArea').innerHTML = html;
+
+  // 페이지네이션
+  renderPagination(totalPages);
+}
+
+// ── 페이지네이션 ──────────────────────────
+function renderPagination(totalPages) {
+  const pag = document.getElementById('pagination');
+  if (totalPages <= 1) { pag.style.display = 'none'; return; }
+  pag.style.display = 'flex';
+
+  let html = `<button class="page-btn" onclick="goPage(${currentPage-1})" 
+    ${currentPage===1?'disabled':''}>◀</button>`;
+
+  // 앞뒤 2페이지씩 표시
+  for (let p = Math.max(1,currentPage-2); p <= Math.min(totalPages,currentPage+2); p++) {
+    html += `<button class="page-btn ${p===currentPage?'active':''}" 
+      onclick="goPage(${p})">${p}</button>`;
+  }
+
+  html += `<button class="page-btn" onclick="goPage(${currentPage+1})" 
+    ${currentPage===totalPages?'disabled':''}>▶</button>`;
+  html += `<span class="page-info">${currentPage} / ${totalPages}</span>`;
+
+  pag.innerHTML = html;
+}
+
+function goPage(p) {
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  if (p < 1 || p > totalPages) return;
+  currentPage = p;
+  renderResults();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ── 상세 오버레이 ─────────────────────────
+function openDetail(idx) {
+  const w = filtered[idx];
+  if (!w) return;
+
+  document.getElementById('dTitle').textContent = w.t || '';
+  document.getElementById('dBadges').innerHTML =
+    [w.f1, w.f2, w.f3].filter(Boolean).map(v => `<span class="badge">${esc(v)}</span>`).join('');
+
+  document.getElementById('dF1').textContent = w.f1 || '';
+  document.getElementById('dF2').textContent = w.f2 || '';
+  document.getElementById('dF3').textContent = w.f3 || '';
+  document.getElementById('dC').textContent  = w.c  || '';
+
+  setOptional('rowAr', 'dAr', w.ar);
+  setOptional('rowLy', 'dLy', w.ly);
+  setOptional('rowCs', 'dCs', w.cs);
+
+  document.getElementById('dDate').textContent  = w.d  || '';
+  document.getElementById('dPlace').textContent = w.p  || '';
+  document.getElementById('dName').textContent  = w.n  || '';
+  document.getElementById('dPlay').textContent  = w.pp || '';
+
+  setSection('secNote', 'dNote', w.nt);
+  setSection('secCm',   'dCm',   w.cm);
+  setSection('secAn',   'dAn',   w.an);
+  setSection('secN2',   'dN2',   w.n2);
+
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function setOptional(rowId, valId, value) {
+  const val = (value || '').trim();
+  const row = document.getElementById(rowId);
+  document.getElementById(valId).textContent = val;
+  row.style.display = val ? '' : 'none';
+}
+
+function setSection(secId, textId, value) {
+  const val = (value || '').trim();
+  document.getElementById(secId).style.display = val ? 'block' : 'none';
+  document.getElementById(textId).textContent = val;
+}
+
+function closeDetail() {
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleOverlayBg(e) {
+  if (e.target === document.getElementById('overlay')) closeDetail();
+}
+
+// ── 초기화 ────────────────────────────────
+function resetForm() {
+  ['q','fTitle','fComposer','fPlayer','fYearFrom','fYearTo'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  ['fForm1','fForm2','fForm3'].forEach(id => {
+    document.getElementById(id).selectedIndex = 0;
+  });
+  filtered = [];
+  currentPage = 1;
+  document.getElementById('resultSummary').style.display = 'none';
+  document.getElementById('pagination').style.display = 'none';
+  document.getElementById('resultArea').innerHTML =
+    `<div class="state-box"><div class="icon">🎼</div><p>검색 조건을 입력하고 검색 버튼을 눌러주세요</p></div>`;
+}
+
+// ── 유틸 ──────────────────────────────────
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+</script>
+</body>
+</html>

@@ -352,7 +352,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
       <div class="d-badges" id="dBadges"></div>
 
       <div class="d-sec">
-        <div class="d-sec-title">작품 정보</div>
+        <div class="d-sec-title"> </div>
         <div class="d-grid">
           <div class="d-row" id="dCRow"><span class="d-lbl">작곡</span><span class="d-val" id="dC"></span></div>
           <div class="d-row" id="dArRow"><span class="d-lbl">편곡</span><span class="d-val" id="dAr"></span></div>
@@ -362,12 +362,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans
       </div>
 
       <div class="d-sec" id="dPerformSec">
-        <div class="d-sec-title">초연 공연 정보</div>
+        <div class="d-sec-title">초연 정보</div>
         <div class="d-grid">
-          <div class="d-row"><span class="d-lbl">공연일</span><span class="d-val" id="dD"></span></div>
-          <div class="d-row"><span class="d-lbl">공연 장소</span><span class="d-val" id="dP"></span></div>
-          <div class="d-row full"><span class="d-lbl">공연명</span><span class="d-val" id="dN"></span></div>
-          <div class="d-row full"><span class="d-lbl">연주자</span><span class="d-val" id="dPp"></span></div>
+          <div class="d-row" id="dNRow"><span class="d-lbl">공연일</span><span class="d-val" id="dD"></span></div>
+          <div class="d-row" id="dPRow"><span class="d-lbl">공연 장소</span><span class="d-val" id="dP"></span></div>
+          <div class="d-row full" id="dNRow"><span class="d-lbl">공연명</span><span class="d-val" id="dN"></span></div>
+          <div class="d-row full" id="dPpRow"><span class="d-lbl">연주자</span><span class="d-val" id="dPp"></span></div>
         </div>
       </div>
 
@@ -592,6 +592,10 @@ function openDetail(idx) {
     if (row) row.style.display = row.querySelector('.d-val').textContent==='—'?'none':'flex';
   });
   dv('dD',w.d); dv('dP',w.p); dv('dN',w.n); dv('dPp',w.pp);
+  ['dDRow', 'dPRow', 'dNRow', 'dPpRow'].forEach(id=>{
+    const row=document.getElementById(id);
+    if(row) row.style.display=row.querySelector('.d-val').textContent==='—'?'none':'flex';
+  });  
   document.getElementById('dPerformSec').style.display = (w.d||w.p||w.n||w.pp)?'block':'none';
   ds('dNtSec','dNt',w.nt);
   ds('dCmSec','dCm',w.cm);

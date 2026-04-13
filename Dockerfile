@@ -2,7 +2,8 @@ FROM python:3.12-slim
 
 # Datasette와 플러그인 설치
 RUN pip install --no-cache-dir \
-    datasette==0.65.1 \
+    setuptools \
+    datasette \
     datasette-write \
     datasette-auth-passwords
 

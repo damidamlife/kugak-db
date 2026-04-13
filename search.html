@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>상세검색 · 한국음악 창작고 작품 DB</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f5f4f0;--surface:#fff;--border:#e5e4df;--border2:#d3d1c7;
+  --text:#1a1a18;--muted:#888780;--hint:#b4b2a9;
+  --blue:#185FA5;--blue-light:#e6f1fb;--blue-text:#0C447C;
+  --teal:#1D9E75;--teal-light:#e1f5ee;--teal-text:#085041;
+  --amber:#BA7517;--amber-light:#faeeda;--amber-text:#633806;
+  --gray:#f1efe8;
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1a1a18;--surface:#2c2c2a;--border:#444441;--border2:#5f5e5a;
+  --text:#e8e7e2;--muted:#888780;--hint:#5f5e5a;
+  --blue:#378ADD;--blue-light:#0C447C;--blue-text:#B5D4F4;
+  --teal:#1D9E75;--teal-light:#085041;--teal-text:#9FE1CB;
+  --amber:#EF9F27;--amber-light:#633806;--amber-text:#FAC775;
+  --gray:#2c2c2a;
+}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',sans-serif;
+  background:var(--bg);color:var(--text);font-size:15px;line-height:1.6;min-height:100vh}
+
+/* 헤더 */
+.header{background:var(--surface);border-bottom:1px solid var(--border);
+  padding:14px 28px;display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:200}
+.header-left h1{font-size:16px;font-weight:600}
+.header-left p{font-size:12px;color:var(--muted);margin-top:1px}
+.header-right{display:flex;gap:8px;align-items:center}
+.header-link{font-size:12px;color:var(--blue);text-decoration:none;
+  padding:5px 12px;border:0.5px solid var(--border2);border-radius:6px}
+.header-link:hover{background:var(--gray)}
+
+/* 로딩 */
+#loading{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;min-height:60vh;gap:12px;color:var(--muted)}
+.spinner{width:28px;height:28px;border:3px solid var(--border);
+  border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* 메인 레이아웃 */
+#app{display:none}
+.layout{display:grid;grid-template-columns:280px 1fr;gap:0;min-height:calc(100vh - 57px)}
+
+/* 사이드바 — 검색 패널 */
+.sidebar{background:var(--surface);border-right:1px solid var(--border);
+  padding:20px;overflow-y:auto;position:sticky;top:57px;height:calc(100vh - 57px)}
+.sidebar-title{font-size:11px;font-weight:500;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:12px}
+
+/* 검색 폼 요소 */
+.field-group{margin-bottom:14px}
+.field-label{font-size:11px;font-weight:500;color:var(--muted);margin-bottom:5px;display:block}
+.field-input{width:100%;padding:7px 10px;font-size:13px;
+  border:1px solid var(--border2);border-radius:7px;
+  background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.field-input:focus{border-color:var(--blue)}
+.field-select{width:100%;padding:7px 10px;font-size:13px;
+  border:1px solid var(--border2);border-radius:7px;
+  background:var(--surface);color:var(--text);outline:none}
+.field-select:focus{border-color:var(--blue)}
+.date-row{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.date-sep{display:flex;align-items:center;justify-content:center;
+  font-size:12px;color:var(--muted);padding-top:22px}
+
+/* 통합검색 강조 */
+.unified-search{position:relative;margin-bottom:6px}
+.unified-search input{width:100%;padding:9px 12px 9px 34px;font-size:14px;
+  border:1.5px solid var(--blue);border-radius:8px;
+  background:var(--surface);color:var(--text);outline:none;font-family:inherit}
+.unified-search input:focus{box-shadow:0 0 0 3px rgba(24,95,165,.12)}
+.search-icon{position:absolute;left:10px;top:50%;transform:translateY(-50%);
+  width:16px;height:16px;color:var(--blue);pointer-events:none}
+.search-icon svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+
+/* 구분선 */
+.divider{height:1px;background:var(--border);margin:16px 0}
+.section-toggle{display:flex;align-items:center;justify-content:space-between;
+  cursor:pointer;margin-bottom:10px;user-select:none}
+.section-toggle-label{font-size:11px;font-weight:500;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.06em}
+.toggle-arrow{font-size:10px;color:var(--hint);transition:transform .15s}
+.toggle-arrow.open{transform:rotate(180deg)}
+.section-body{overflow:hidden;transition:max-height .2s}
+
+/* 버튼 */
+.btn-row{display:flex;gap:8px;margin-top:6px}
+.btn{width:100%;padding:8px;border-radius:7px;font-size:13px;cursor:pointer;
+  border:1px solid var(--border2);background:var(--surface);
+  color:var(--text);font-family:inherit;transition:all .12s}
+.btn:hover{background:var(--gray)}
+.btn-primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn-primary:hover{background:#0C447C}
+.btn-reset{color:var(--muted)}
+
+/* 해설 유무 토글 */
+.toggle-row{display:flex;gap:6px;flex-wrap:wrap}
+.toggle-chip{padding:4px 10px;border-radius:6px;font-size:12px;cursor:pointer;
+  border:0.5px solid var(--border2);background:var(--surface);color:var(--muted);transition:all .12s}
+.toggle-chip.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+
+/* 결과 영역 */
+.results{padding:20px 24px 40px;overflow-y:auto}
+.results-header{display:flex;align-items:center;justify-content:space-between;
+  margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.results-count{font-size:13px;color:var(--muted)}
+.results-count strong{color:var(--text);font-weight:600}
+.sort-row{display:flex;gap:6px;align-items:center}
+.sort-label{font-size:12px;color:var(--muted)}
+.sort-sel{padding:5px 8px;font-size:12px;border:0.5px solid var(--border2);
+  border-radius:6px;background:var(--surface);color:var(--text)}
+
+/* 결과 카드 그리드 */
+.result-grid{display:flex;flex-direction:column;gap:8px}
+.result-card{background:var(--surface);border:0.5px solid var(--border);
+  border-radius:10px;padding:14px 16px;cursor:pointer;transition:all .12s}
+.result-card:hover{border-color:var(--blue);box-shadow:0 1px 6px rgba(24,95,165,.1)}
+.card-title{font-size:15px;font-weight:500;margin-bottom:6px;color:var(--text)}
+.card-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:6px}
+.badge{display:inline-block;padding:2px 7px;border-radius:5px;font-size:11px;font-weight:500}
+.b-vocal{background:var(--teal-light);color:var(--teal-text)}
+.b-instr{background:var(--blue-light);color:var(--blue-text)}
+.b-drama{background:var(--amber-light);color:var(--amber-text)}
+.b-etc{background:var(--gray);color:var(--muted)}
+.card-info{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px}
+.card-info span{display:flex;align-items:center;gap:3px}
+.card-commentary{font-size:12px;color:var(--muted);margin-top:8px;
+  line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden;
+  border-top:0.5px solid var(--border);padding-top:8px}
+.cm-badge{font-size:10px;font-weight:500;background:var(--teal-light);
+  color:var(--teal-text);padding:1px 6px;border-radius:4px;white-space:nowrap}
+
+/* 페이지네이션 */
+.pagination{display:flex;gap:6px;align-items:center;margin-top:20px;justify-content:center}
+.page-btn{padding:6px 14px;border:0.5px solid var(--border2);border-radius:7px;
+  background:var(--surface);color:var(--text);cursor:pointer;font-size:13px}
+.page-btn:disabled{opacity:.3;cursor:default}
+.page-btn:not(:disabled):hover{background:var(--gray)}
+.page-info{color:var(--muted);font-size:12px;min-width:80px;text-align:center}
+
+/* 빈 결과 */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-title{font-size:16px;font-weight:500;margin-bottom:8px;color:var(--text)}
+
+/* 세부정보 오버레이 (index.html과 동일) */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:400;overflow-y:auto;padding:40px 16px}
+.overlay.open{display:block}
+.overlay-inner{max-width:680px;margin:0 auto}
+.detail-card{background:var(--surface);border-radius:14px;padding:32px;position:relative}
+.detail-back{display:inline-flex;align-items:center;gap:5px;color:var(--muted);
+  font-size:13px;cursor:pointer;background:none;border:none;margin-bottom:18px;
+  padding:0;font-family:inherit}
+.detail-back:hover{color:var(--blue)}
+.detail-close{position:absolute;top:18px;right:18px;background:none;
+  border:1px solid var(--border2);border-radius:7px;width:32px;height:32px;
+  cursor:pointer;font-size:16px;color:var(--muted);
+  display:flex;align-items:center;justify-content:center}
+.detail-close:hover{background:var(--gray)}
+.d-title{font-size:22px;font-weight:600;margin-bottom:8px;
+  line-height:1.3;padding-right:48px}
+.d-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:22px}
+.d-sec{margin-bottom:20px}
+.d-sec-title{font-size:11px;font-weight:500;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;
+  padding-bottom:6px;border-bottom:1px solid var(--border)}
+.d-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.d-row{display:flex;flex-direction:column;gap:2px}
+.d-row.full{grid-column:1/-1}
+.d-lbl{font-size:11px;color:var(--hint)}
+.d-val{font-size:14px;color:var(--text);word-break:break-word}
+.d-val.empty{color:var(--hint)}
+.d-commentary{font-size:14px;color:var(--text);line-height:1.85;
+  background:var(--gray);border-radius:8px;padding:14px 16px;
+  white-space:pre-wrap;word-break:break-word}
+
+@media(max-width:700px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:static;height:auto;border-right:none;border-bottom:1px solid var(--border)}
+  .d-grid{grid-template-columns:1fr}
+  .detail-card{padding:20px}
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <h1>상세검색</h1>
+    <p>항목별 조건을 조합해서 검색합니다</p>
+  </div>
+  <div class="header-right">
+    <span id="totalBadge" style="font-size:12px;color:var(--muted)">로딩 중...</span>
+    <a href="index.html" class="header-link">← 목록으로</a>
+  </div>
+</div>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <span>데이터를 불러오는 중...</span>
+</div>
+
+<div id="app">
+<div class="layout">
+
+  <!-- 검색 사이드바 -->
+  <div class="sidebar">
+
+    <!-- 통합검색 -->
+    <div class="sidebar-title">통합 검색</div>
+    <div class="unified-search">
+      <span class="search-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>
+      <input type="text" id="qAll" placeholder="제목, 작곡가, 공연명, 해설..." oninput="doSearch()">
+    </div>
+    <div style="font-size:11px;color:var(--hint);margin-bottom:4px">모든 항목에서 동시에 검색</div>
+
+    <div class="divider"></div>
+
+    <!-- 항목별 상세 검색 -->
+    <div class="section-toggle" onclick="toggleSection('detail')">
+      <span class="section-toggle-label">항목별 상세 검색</span>
+      <span class="toggle-arrow open" id="detailArrow">▼</span>
+    </div>
+    <div class="section-body" id="detailBody">
+
+      <div class="field-group">
+        <label class="field-label">제목</label>
+        <input class="field-input" type="text" id="qTitle" placeholder="제목 검색..." oninput="doSearch()">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">작곡가</label>
+        <input class="field-input" type="text" id="qComposer" placeholder="작곡가명..." oninput="doSearch()">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">편곡 / 작사</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <input class="field-input" type="text" id="qArr" placeholder="편곡..." oninput="doSearch()">
+          <input class="field-input" type="text" id="qLyric" placeholder="작사..." oninput="doSearch()">
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">장르</label>
+        <select class="field-select" id="qGenre" onchange="doSearch()">
+          <option value="">전체</option>
+          <option value="기악">기악</option>
+          <option value="성악">성악</option>
+          <option value="극음악">극음악</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">연주 형식</label>
+        <select class="field-select" id="qForm" onchange="doSearch()">
+          <option value="">전체</option>
+        </select>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">악기 · 분류</label>
+        <input class="field-input" type="text" id="qInstr" placeholder="가야금, 대금..." oninput="doSearch()">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">공연 장소</label>
+        <input class="field-input" type="text" id="qPlace" placeholder="국립국악원..." oninput="doSearch()">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">공연명</label>
+        <input class="field-input" type="text" id="qPerfName" placeholder="정기연주회..." oninput="doSearch()">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">공연 연도</label>
+        <div class="date-row">
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:3px">시작</div>
+            <input class="field-input" type="number" id="qYearFrom" placeholder="1940" min="1940" max="2020" oninput="doSearch()">
+          </div>
+          <div>
+            <div style="font-size:10px;color:var(--muted);margin-bottom:3px">끝</div>
+            <input class="field-input" type="number" id="qYearTo" placeholder="2018" min="1940" max="2020" oninput="doSearch()">
+          </div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">작품 해설</label>
+        <input class="field-input" type="text" id="qCommentary" placeholder="해설 내용 검색..." oninput="doSearch()">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">해설 보유 여부</label>
+        <div class="toggle-row">
+          <div class="toggle-chip active" id="chip-all" onclick="setHasCommentary('all')">전체</div>
+          <div class="toggle-chip" id="chip-yes" onclick="setHasCommentary('yes')">해설 있음</div>
+          <div class="toggle-chip" id="chip-no" onclick="setHasCommentary('no')">해설 없음</div>
+        </div>
+      </div>
+
+    </div><!-- /detailBody -->
+
+    <div class="btn-row">
+      <button class="btn btn-reset" onclick="resetAll()">초기화</button>
+    </div>
+
+  </div><!-- /sidebar -->
+
+  <!-- 결과 영역 -->
+  <div class="results">
+    <div class="results-header">
+      <div class="results-count" id="resultsCount"></div>
+      <div class="sort-row">
+        <span class="sort-label">정렬</span>
+        <select class="sort-sel" id="sortSel" onchange="doSearch()">
+          <option value="d-asc">공연일 오름차순</option>
+          <option value="d-desc">공연일 내림차순</option>
+          <option value="t-asc">제목 가나다순</option>
+          <option value="c-asc">작곡가 가나다순</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="result-grid" id="resultGrid"></div>
+
+    <div class="pagination">
+      <button class="page-btn" id="prevBtn" onclick="changePage(-1)">← 이전</button>
+      <span class="page-info" id="pageInfo"></span>
+      <button class="page-btn" id="nextBtn" onclick="changePage(1)">다음 →</button>
+    </div>
+  </div>
+
+</div>
+</div><!-- /app -->
+
+<!-- 세부정보 오버레이 -->
+<div class="overlay" id="overlay" onclick="handleOverlayBg(event)">
+  <div class="overlay-inner">
+    <div class="detail-card">
+      <button class="detail-close" onclick="closeDetail()">✕</button>
+      <button class="detail-back" onclick="closeDetail()">← 검색결과로</button>
+      <div class="d-title" id="dTitle"></div>
+      <div class="d-badges" id="dBadges"></div>
+
+      <div class="d-sec">
+        <div class="d-sec-title">작품 정보</div>
+        <div class="d-grid">
+          <div class="d-row" id="dCRow"><span class="d-lbl">작곡</span><span class="d-val" id="dC"></span></div>
+          <div class="d-row" id="dArRow"><span class="d-lbl">편곡</span><span class="d-val" id="dAr"></span></div>
+          <div class="d-row" id="dLyRow"><span class="d-lbl">작사</span><span class="d-val" id="dLy"></span></div>
+          <div class="d-row full" id="dCsRow"><span class="d-lbl">구성</span><span class="d-val" id="dCs"></span></div>
+        </div>
+      </div>
+
+      <div class="d-sec" id="dPerformSec">
+        <div class="d-sec-title">초연 공연 정보</div>
+        <div class="d-grid">
+          <div class="d-row"><span class="d-lbl">공연일</span><span class="d-val" id="dD"></span></div>
+          <div class="d-row"><span class="d-lbl">공연 장소</span><span class="d-val" id="dP"></span></div>
+          <div class="d-row full"><span class="d-lbl">공연명</span><span class="d-val" id="dN"></span></div>
+          <div class="d-row full"><span class="d-lbl">연주자</span><span class="d-val" id="dPp"></span></div>
+        </div>
+      </div>
+
+      <div class="d-sec" id="dNtSec" style="display:none">
+        <div class="d-sec-title">비고</div>
+        <div class="d-commentary" id="dNt"></div>
+      </div>
+      <div class="d-sec" id="dCmSec" style="display:none">
+        <div class="d-sec-title">작품 해설</div>
+        <div class="d-commentary" id="dCm"></div>
+      </div>
+      <div class="d-sec" id="dAnSec" style="display:none">
+        <div class="d-sec-title">추가 정보</div>
+        <div class="d-commentary" id="dAn"></div>
+      </div>
+      <div class="d-sec" id="dN2Sec" style="display:none">
+        <div class="d-sec-title">보충 해설</div>
+        <div class="d-commentary" id="dN2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let WORKS = [];
+let filtered = [], currentPage = 0;
+const PAGE = 20;
+let hasCommentaryFilter = 'all';
+let detailSection = true;
+
+// ── 초기화 ──
+async function init() {
+  try {
+    const res = await fetch('kugak.json');
+    if (!res.ok) throw new Error();
+    const data = await res.json();
+    WORKS = data.works || [];
+
+    // 형식 옵션 채우기
+    const formSet = [...new Set(WORKS.map(w => w.f2).filter(Boolean))].sort();
+    const sel = document.getElementById('qForm');
+    formSet.forEach(f => {
+      const o = document.createElement('option');
+      o.value = f; o.textContent = f; sel.appendChild(o);
+    });
+
+    document.getElementById('totalBadge').textContent = WORKS.length.toLocaleString() + '개 작품';
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+
+    filtered = WORKS.slice();
+    renderResults();
+  } catch(e) {
+    document.getElementById('loading').innerHTML =
+      '<p style="color:#E24B4A">kugak.json을 불러오지 못했습니다.<br><small>index.html과 같은 폴더에 있는지 확인하세요.</small></p>';
+  }
+}
+
+// ── 검색 ──
+function doSearch() {
+  const qAll   = (document.getElementById('qAll').value || '').toLowerCase();
+  const qTitle = (document.getElementById('qTitle').value || '').toLowerCase();
+  const qComp  = (document.getElementById('qComposer').value || '').toLowerCase();
+  const qArr   = (document.getElementById('qArr').value || '').toLowerCase();
+  const qLy    = (document.getElementById('qLyric').value || '').toLowerCase();
+  const qGenre = document.getElementById('qGenre').value;
+  const qForm  = document.getElementById('qForm').value;
+  const qInstr = (document.getElementById('qInstr').value || '').toLowerCase();
+  const qPlace = (document.getElementById('qPlace').value || '').toLowerCase();
+  const qPerfName = (document.getElementById('qPerfName').value || '').toLowerCase();
+  const qCm    = (document.getElementById('qCommentary').value || '').toLowerCase();
+  const yFrom  = parseInt(document.getElementById('qYearFrom').value) || 0;
+  const yTo    = parseInt(document.getElementById('qYearTo').value) || 9999;
+
+  filtered = WORKS.filter(w => {
+    // 통합검색
+    if (qAll) {
+      const hay = (w.t + w.c + w.n + w.f3 + w.cm + w.nt + w.n2 + w.p).toLowerCase();
+      if (!hay.includes(qAll)) return false;
+    }
+    // 항목별
+    if (qTitle && !(w.t||'').toLowerCase().includes(qTitle)) return false;
+    if (qComp  && !(w.c||'').toLowerCase().includes(qComp))  return false;
+    if (qArr   && !(w.ar||'').toLowerCase().includes(qArr))  return false;
+    if (qLy    && !(w.ly||'').toLowerCase().includes(qLy))   return false;
+    if (qGenre && w.f1 !== qGenre) return false;
+    if (qForm  && !(w.f2||'').includes(qForm)) return false;
+    if (qInstr && !(w.f3||'').toLowerCase().includes(qInstr)) return false;
+    if (qPlace && !(w.p||'').toLowerCase().includes(qPlace)) return false;
+    if (qPerfName && !(w.n||'').toLowerCase().includes(qPerfName)) return false;
+    if (qCm    && !(w.cm||'').toLowerCase().includes(qCm))   return false;
+    // 해설 여부
+    if (hasCommentaryFilter === 'yes' && !w.cm) return false;
+    if (hasCommentaryFilter === 'no'  &&  w.cm) return false;
+    // 연도
+    if (yFrom || yTo < 9999) {
+      const ym = (w.d||'').match(/(1[89]\d{2}|20[012]\d)/);
+      if (!ym) return (yFrom === 0);
+      const y = parseInt(ym[1]);
+      if (y < yFrom || y > yTo) return false;
+    }
+    return true;
+  });
+
+  // 정렬
+  const sort = document.getElementById('sortSel').value;
+  filtered.sort((a, b) => {
+    if (sort === 'd-asc' || sort === 'd-desc') {
+      const na = (a.d||'').replace(/\D/g,'').padEnd(8,'0');
+      const nb = (b.d||'').replace(/\D/g,'').padEnd(8,'0');
+      return sort === 'd-asc' ? na.localeCompare(nb) : nb.localeCompare(na);
+    }
+    if (sort === 't-asc') return (a.t||'').localeCompare(b.t||'','ko');
+    if (sort === 'c-asc') return (a.c||'').localeCompare(b.c||'','ko');
+    return 0;
+  });
+
+  currentPage = 0;
+  renderResults();
+}
+
+function setHasCommentary(val) {
+  hasCommentaryFilter = val;
+  ['all','yes','no'].forEach(v => {
+    document.getElementById('chip-'+v).classList.toggle('active', v === val);
+  });
+  doSearch();
+}
+
+function resetAll() {
+  ['qAll','qTitle','qComposer','qArr','qLyric','qInstr','qPlace','qPerfName','qCommentary','qYearFrom','qYearTo']
+    .forEach(id => document.getElementById(id).value = '');
+  document.getElementById('qGenre').value = '';
+  document.getElementById('qForm').value = '';
+  setHasCommentary('all');
+}
+
+function toggleSection(id) {
+  detailSection = !detailSection;
+  const body = document.getElementById(id+'Body');
+  const arrow = document.getElementById(id+'Arrow');
+  body.style.maxHeight = detailSection ? '2000px' : '0';
+  arrow.classList.toggle('open', detailSection);
+}
+
+// ── 결과 렌더 ──
+function renderResults() {
+  const total = filtered.length;
+  const start = currentPage * PAGE;
+  const page  = filtered.slice(start, start + PAGE);
+
+  const countEl = document.getElementById('resultsCount');
+  if (total === WORKS.length) {
+    countEl.innerHTML = `전체 <strong>${total.toLocaleString()}</strong>개 작품`;
+  } else {
+    countEl.innerHTML = `<strong>${total.toLocaleString()}</strong>개 검색됨 (전체 ${WORKS.length.toLocaleString()})`;
+  }
+
+  const grid = document.getElementById('resultGrid');
+  grid.innerHTML = '';
+
+  if (!page.length) {
+    grid.innerHTML = `
+      <div class="empty">
+        <div class="empty-title">검색 결과가 없습니다</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:6px">검색 조건을 바꿔보세요</div>
+      </div>`;
+  } else {
+    page.forEach(w => {
+      const idx = WORKS.indexOf(w);
+      const bc = w.f1==='성악'?'b-vocal':w.f1==='극음악'?'b-drama':w.f1==='기악'?'b-instr':'b-etc';
+      const cmPreview = w.cm ? w.cm.replace(/\?/g,' ').substring(0,120) + (w.cm.length>120?'…':'') : '';
+      grid.innerHTML += `
+        <div class="result-card" onclick="openDetail(${idx})">
+          <div class="card-title">${esc(w.t)||'제목 없음'}</div>
+          <div class="card-meta">
+            ${w.f1?`<span class="badge ${bc}">${esc(w.f1)}</span>`:''}
+            ${w.f2?`<span class="badge b-etc">${esc(w.f2)}</span>`:''}
+            ${w.f3?`<span class="badge b-etc" style="background:none;border:0.5px solid var(--border2)">${esc(w.f3)}</span>`:''}
+            ${w.cm?`<span class="cm-badge">해설 있음</span>`:''}
+          </div>
+          <div class="card-info">
+            ${w.c?`<span>작곡 ${esc(w.c)}</span>`:''}
+            ${w.d?`<span>공연일 ${esc(w.d)}</span>`:''}
+            ${w.p?`<span>${esc(w.p)}</span>`:''}
+          </div>
+          ${cmPreview?`<div class="card-commentary">${esc(cmPreview)}</div>`:''}
+        </div>`;
+    });
+  }
+
+  const tp = Math.ceil(total / PAGE) || 1;
+  document.getElementById('pageInfo').textContent = `${currentPage+1} / ${tp}`;
+  document.getElementById('prevBtn').disabled = currentPage === 0;
+  document.getElementById('nextBtn').disabled = currentPage >= tp-1;
+}
+
+function changePage(d) {
+  const tp = Math.ceil(filtered.length / PAGE) || 1;
+  currentPage = Math.max(0, Math.min(tp-1, currentPage+d));
+  renderResults();
+  document.querySelector('.results').scrollTo({top:0,behavior:'smooth'});
+}
+
+function esc(s) {
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ── 세부정보 오버레이 ──
+function openDetail(idx) {
+  const w = WORKS[idx];
+  const bc = w.f1==='성악'?'b-vocal':w.f1==='극음악'?'b-drama':w.f1==='기악'?'b-instr':'b-etc';
+  document.getElementById('dTitle').textContent = w.t || '제목 없음';
+  let bdg = '';
+  if (w.f1) bdg += `<span class="badge ${bc}">${esc(w.f1)}</span>`;
+  if (w.f2) bdg += `<span class="badge b-etc">${esc(w.f2)}</span>`;
+  if (w.f3) bdg += `<span class="badge b-etc">${esc(w.f3)}</span>`;
+  document.getElementById('dBadges').innerHTML = bdg;
+  dv('dC',w.c); dv('dAr',w.ar); dv('dLy',w.ly); dv('dCs',w.cs);
+  ['dCRow','dArRow','dLyRow','dCsRow'].forEach(id => {
+    const row = document.getElementById(id);
+    if (row) row.style.display = row.querySelector('.d-val').textContent==='—'?'none':'flex';
+  });
+  dv('dD',w.d); dv('dP',w.p); dv('dN',w.n); dv('dPp',w.pp);
+  document.getElementById('dPerformSec').style.display = (w.d||w.p||w.n||w.pp)?'block':'none';
+  ds('dNtSec','dNt',w.nt);
+  ds('dCmSec','dCm',w.cm);
+  ds('dAnSec','dAn',w.an);
+  ds('dN2Sec','dN2',w.n2);
+  document.getElementById('overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function dv(id, val) {
+  const el = document.getElementById(id); if (!el) return;
+  if (val && val.trim()) { el.textContent = val; el.className='d-val'; }
+  else { el.textContent = '—'; el.className='d-val empty'; }
+}
+
+function ds(secId, valId, val) {
+  const sec = document.getElementById(secId), el = document.getElementById(valId);
+  if (!sec || !el) return;
+  if (val && val.trim()) { sec.style.display='block'; el.textContent=val.replace(/\?/g,' '); }
+  else { sec.style.display='none'; }
+}
+
+function closeDetail() {
+  document.getElementById('overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function handleOverlayBg(e) {
+  if (e.target === document.getElementById('overlay')) closeDetail();
+}
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeDetail(); });
+
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+# fly.toml
+# "kugak-db" 부분을 원하는 앱 이름으로 변경하세요.
+# 완성 URL: https://kugak-db.fly.dev
+
+app = "kugak-db"
+primary_region = "nrt"        # 도쿄 리전 (한국에서 가장 가까움)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[http_service]
+  internal_port = 8080
+  force_https = true          # HTTPS 자동 적용
+  auto_stop_machines = true   # 접속 없을 때 절전 (비용 절약)
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1

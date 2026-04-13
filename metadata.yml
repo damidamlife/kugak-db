@@ -75,4 +75,4 @@ plugins:
   datasette-auth-passwords:
     htpasswd_users:
       admin:
-        password_hash: "pbkdf2_sha256$260000$placeholder$replacethiswithrealhash"
+        password_hash: "pbkdf2_sha256$480000$4e6c9f4b86c6d2a7f9b48df4634f6255$TXeoCx0sa6Eqz5NTzIk6MxVYyM3vqGktWF6YORGplGg="

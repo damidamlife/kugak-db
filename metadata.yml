@@ -56,4 +56,4 @@ plugins:
       admin:                  # 관리자 계정 이름
         # 아래 해시를 실제 비밀번호 해시로 교체하세요
         # 임시값 — 배포 전 반드시 변경!
-        password_hash: "pbkdf2_sha256$260000$placeholder$replacethiswithreal"
+        password_hash: "pbkdf2_sha256$480000$4e6c9f4b86c6d2a7f9b48df4634f6255$TXeoCx0sa6Eqz5NTzIk6MxVYyM3vqGktWF6YORGplGg="

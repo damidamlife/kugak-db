@@ -335,13 +335,20 @@ function authHeader() {
 }
 
 async function apiFetch(url, opts = {}) {
+  // 1. 기본 헤더에서 'Content-Type'을 제거합니다.
+  const headers = {
+    ...authHeader(), // API 토큰 등 인증 헤더는 유지
+    ...(opts.headers || {})
+  };
+
   const res = await fetch(url, {
     ...opts,
-    headers: { 'Content-Type': 'application/json', ...authHeader(), ...(opts.headers||{}) }
+    headers: headers
   });
+
   if (!res.ok) {
     const txt = await res.text();
-    throw new Error(`HTTP ${res.status}: ${txt.substring(0,200)}`);
+    throw new Error(`HTTP ${res.status}: ${txt.substring(0, 200)}`);
   }
   return res.json();
 }

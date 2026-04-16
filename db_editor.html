@@ -354,60 +354,53 @@ async function connect() {
   }
 }
 
-// ── 검색 (서버 사이드) ──
-function buildUrl(offset) {
-  const q    = (document.getElementById('q').value || '').trim();
+// ── 검색 조건 → SQL 빌더 ──
+function buildWhere() {
+  const q     = (document.getElementById('q').value || '').trim();
   const genre = document.getElementById('fGenre').value;
   const cm    = document.getElementById('fCm').value;
+  const parts = ['1=1'];
+  const p     = {};
 
-  const params = new URLSearchParams();
-  params.set('_shape', 'array');
-  params.set('_size', PAGE);
-  params.set('_offset', offset);
+  if (q) {
+    parts.push(`(title LIKE :q OR composer LIKE :q OR perf_name LIKE :q OR commentary LIKE :q)`);
+    p.q = `%${q}%`;
+  }
+  if (genre) { parts.push(`genre = :genre`); p.genre = genre; }
+  if (cm === 'yes') parts.push(`commentary IS NOT NULL AND commentary != ''`);
+  if (cm === 'no')  parts.push(`(commentary IS NULL OR commentary = '')`);
 
-  // Datasette 검색: _search 파라미터 (FTS5 인덱스 사용)
-  if (q) params.set('_search', q);
+  return { where: parts.join(' AND '), params: p };
+}
 
-  // 필터
-  if (genre) params.set('genre', genre);
-  if (cm === 'yes') params.set('commentary__isnotnull', '1');
-  if (cm === 'no')  params.set('commentary__isnull', '1');
-
-  return `${apiBase()}.json?${params.toString()}`;
+function buildSqlUrl(sql, params) {
+  const p = new URLSearchParams({ sql, _shape: 'array' });
+  Object.entries(params).forEach(([k, v]) => p.set(k, v));
+  return `${DS_URL}/${DS_DB}.json?${p.toString()}`;
 }
 
 async function search() {
   currentOffset = 0;
+  // 전체 건수 먼저 확인
+  const { where, params } = buildWhere();
+  try {
+    const cntSql = `SELECT COUNT(*) AS n FROM ${DS_TABLE} WHERE ${where}`;
+    const cntRes = await apiFetch(buildSqlUrl(cntSql, params));
+    totalCount = cntRes[0]?.n ?? 0;
+  } catch(e) {
+    totalCount = 0;
+  }
   await fetchPage(0);
 }
 
 async function fetchPage(offset) {
   setLoading(true);
   try {
-    // 데이터 가져오기
-    const rows = await apiFetch(buildUrl(offset));
+    const { where, params } = buildWhere();
+    const sql = `SELECT * FROM ${DS_TABLE} WHERE ${where} ORDER BY perf_date LIMIT ${PAGE} OFFSET ${offset}`;
+    const rows = await apiFetch(buildSqlUrl(sql, params));
     currentRows = rows;
     currentOffset = offset;
-
-    // 전체 건수는 count URL로 별도 요청
-    if (offset === 0) {
-      const countRows = await apiFetch(buildUrl(0).replace(`_size=${PAGE}`, '_size=0'));
-      // Datasette는 _size=0 이면 빈 배열 반환 — 대신 헤더나 별도 API 사용 불가
-      // 총 건수를 정확히 알기 위해 SQL 쿼리 사용
-      const q = (document.getElementById('q').value || '').trim();
-      const genre = document.getElementById('fGenre').value;
-      const cm = document.getElementById('fCm').value;
-      let sql = `SELECT COUNT(*) as n FROM ${DS_TABLE} WHERE 1=1`;
-      const sqlParams = new URLSearchParams();
-      if (q) { sql += ` AND (title LIKE :q OR composer LIKE :q OR perf_name LIKE :q)`; sqlParams.set('q', `%${q}%`); }
-      if (genre) { sql += ` AND genre = :genre`; sqlParams.set('genre', genre); }
-      if (cm === 'yes') sql += ` AND commentary IS NOT NULL AND commentary != ''`;
-      if (cm === 'no')  sql += ` AND (commentary IS NULL OR commentary = '')`;
-      sqlParams.set('sql', sql);
-      const cntRes = await apiFetch(`${DS_URL}/${DS_DB}.json?${sqlParams.toString()}&_shape=array`);
-      totalCount = cntRes[0]?.n ?? rows.length;
-    }
-
     renderTable(rows);
     updatePagination();
   } catch(e) {
